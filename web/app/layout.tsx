@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import { CHROME_STORE_URL } from '@/lib/utils'
+import { jsonLdOrg, jsonLdWebSite } from '@/lib/structured-data'
 import { Geist, Geist_Mono } from 'next/font/google'
 
 const sans = Geist({ subsets: ['latin'], variable: '--font-sans', display: 'swap' })
@@ -24,8 +24,8 @@ export const metadata: Metadata = {
     'cover letter generator Chrome extension',
     'cover letter from job posting',
     'ATS match score',
-    'open source cover letter generator',
-    'cover letter generator with your own API key',
+    'resume tailoring Chrome extension',
+    'ATS resume checker',
     'cover letter generator free',
   ],
   robots: {
@@ -49,46 +49,7 @@ export const metadata: Metadata = {
   },
 }
 
-const jsonLdOrg = {
-  '@context': 'https://schema.org',
-  '@type': 'Organization',
-  name: 'Cover Me',
-  url: BASE,
-  logo: `${BASE}/logo.png`,
-  sameAs: [
-    'https://github.com/TheLinc/cover-me',
-    'https://github.com/TheLinc',
-    'https://www.linkedin.com/in/lincolnlaylor/',
-    CHROME_STORE_URL,
-    'https://alternativeto.net/software/cover-me/about/',
-    'https://toolradar.com/tools/cover-me',
-    'https://www.opensourcealternatives.to/item/cover-me',
-    'https://www.libhunt.com/r/cover-me',
-    'https://www.saashub.com/cover-me-dev',
-    'https://www.rankmyai.com/tools/7d6bc99e-7a27-420c-bc04-03329ea46349/cover-me',
-    'https://peerlist.io/plainstackops/project/cover-me',
-  ],
-  founder: {
-    '@type': 'Person',
-    name: 'Lincoln Laylor',
-    url: 'https://www.linkedin.com/in/lincolnlaylor/',
-  },
-  contactPoint: {
-    '@type': 'ContactPoint',
-    email: 'support@cover-me.dev',
-    contactType: 'customer support',
-  },
-}
-
-const jsonLdWebSite = {
-  '@context': 'https://schema.org',
-  '@type': 'WebSite',
-  name: 'Cover Me',
-  url: BASE,
-  description: 'Cover Me is an open-source Chrome extension that tailors your resume, writes a cover letter and answers job application questions for the job posting you have open, on LinkedIn, Indeed, Greenhouse, Lever, Workday and Ashby.',
-}
-
-// Homepage-only JSON-LD lives in lib/structured-data.ts: markup must describe the page it's on, https://developers.google.com/search/docs/appearance/structured-data/sd-policies
+// Homepage-only JSON-LD is added in app/page.tsx: markup must describe the page it's on, https://developers.google.com/search/docs/appearance/structured-data/sd-policies
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

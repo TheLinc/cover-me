@@ -7,7 +7,7 @@ import { SiteFooter } from '@/components/site/SiteFooter'
 import { SiteNav } from '@/components/site/SiteNav'
 import { KINDS, MIN_COMPANIES, PER_COMPANY, TOP, kindOf } from '@/lib/role-keywords'
 import { FETCHED, ROLES, answers, getRole, lead, percent } from '@/lib/roles'
-import { AUTHOR, BASE, OG_IMAGE } from '@/lib/structured-data'
+import { AUTHOR, BASE, OG_IMAGE, ORG_ID } from '@/lib/structured-data'
 import { cn, longDate, storeUrl } from '@/lib/utils'
 
 const LICENSE = 'https://creativecommons.org/licenses/by/4.0/'
@@ -69,7 +69,7 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
       temporalCoverage: FETCHED,
       isAccessibleForFree: true,
       license: LICENSE,
-      creator: [AUTHOR, { '@type': 'Organization', name: 'Cover Me', url: BASE }],
+      creator: [AUTHOR, { '@type': 'Organization', '@id': ORG_ID, name: 'Cover Me', url: BASE }],
       measurementTechnique: 'Keywords read from public Greenhouse and Lever job postings with the Cover Me ATS checker',
       variableMeasured: ['Keyword', 'Keyword type', 'Postings that ask for the keyword', 'Postings read', 'Share of postings'],
       distribution: { '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${url}/keywords.csv` },

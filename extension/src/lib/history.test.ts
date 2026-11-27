@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, answerJobs, recentJobs, uploadMessage, uploadSummary, withLocalOnly } from './history'
+import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, answerJobs, recentJobs, uploadMessage, uploadSummary, withLocalOnly, withSources } from './history'
 
 const job = (url: string, company = 'Northwind', title = 'Engineer') => ({ title, company, url, description: '' })
 const resume = { name: 'Pat', phone: '', email: '', website: '', experience: [], education: [] }
@@ -16,6 +16,12 @@ describe('groupLocalHistory', () => {
     expect(groups[0].latestAt).toBe('2026-10-02T00:00:00Z')
     expect(groups[0].localCoverLetterIds).toEqual(['l1'])
     expect(groups[0].localTailoredIds).toEqual(['t1'])
+  })
+
+  test("a letter keeps the resume it came from (#401)", () => {
+    const source = { filename: 'Pat.pdf', uploadedAt: '2026-09-30T00:00:00Z', fileId: 'f' }
+    const [g] = groupLocalHistory([{ id: 'l1', job: job('https://jobs.example/1'), letter: 'x', createdAt: '2026-10-01T00:00:00Z', source }], [])
+    expect(g.coverLetters[0].source).toEqual(source)
   })
 
   test('with no URL, company and title decide the group', () => {
@@ -85,6 +91,22 @@ describe('accountUpdates', () => {
   })
 })
 
+describe('withSources', () => {
+  const server = [{ key: 'app1', id: 'app1', title: 'A', company: 'Acme', url: 'https://jobs.example/a', latestAt: '2026-10-03T00:00:00Z', coverLetters: [], tailoredResumes: [] }]
+
+  test("the account's copies take the source saved here under the same id, which has the file id (#401)", () => {
+    const local = { filename: 'Pat.pdf', uploadedAt: '2026-09-30T00:00:00Z', fileId: 'f' }
+    const fromServer = { filename: 'Pat.pdf', uploadedAt: '2026-09-30T00:00:00Z' }
+    const [g] = withSources(
+      [{ ...server[0], coverLetters: [{ id: 'l1', letter: 'x', createdAt: '2026-10-01T00:00:00Z' }], tailoredResumes: [{ id: 't1', resume: { ...resume, source: fromServer }, createdAt: '2026-10-02T00:00:00Z' }, { id: 't2', resume: { ...resume, source: fromServer }, createdAt: '2026-10-02T00:00:00Z' }] }],
+      [{ id: 'l1', job: job('https://jobs.example/a'), letter: 'x', createdAt: '2026-10-01T00:00:00Z', account: 'me', source: local }],
+      [{ id: 't1', job: job('https://jobs.example/a'), resume: { ...resume, source: local }, createdAt: '2026-10-02T00:00:00Z', account: 'me' }],
+    )
+    expect(g.coverLetters[0].source).toEqual(local)
+    expect(g.tailoredResumes.map((t) => t.resume.source)).toEqual([local, fromServer])
+  })
+})
+
 describe('withLocalOnly', () => {
   const server = [{ key: 'app1', id: 'app1', title: 'A', company: 'Acme', url: 'https://jobs.example/a', latestAt: '2026-10-03T00:00:00Z', coverLetters: [], tailoredResumes: [] }]
 
@@ -96,7 +118,6 @@ describe('withLocalOnly', () => {
         { id: 'l2', job: job('https://jobs.example/2'), letter: 'x', createdAt: '2026-10-01T00:00:00Z' },
         { id: 'l3', job: job('https://jobs.example/3'), letter: 'x', createdAt: '2026-10-05T00:00:00Z', account: 'other' },
         { id: 'l4', job: job('https://jobs.example/4'), letter: 'x', createdAt: '2026-10-06T00:00:00Z', account: 'me' },
-        // Another Pro account's letter whose save failed: still that account's.
         { id: 'l5', job: job('https://jobs.example/5'), letter: 'x', createdAt: '2026-10-07T00:00:00Z', saveTo: 'you' },
       ],
       [],
@@ -149,8 +170,6 @@ describe('uploadMessage', () => {
 })
 
 describe('groupsFromApplications', () => {
-  // Same rule as local cards: the date is the newest thing made for the job,
-  // so a card doesn't jump to an older date once it's saved.
   test('dates each application by its newest letter or resume', () => {
     const [g] = groupsFromApplications([{
       id: 'app1', title: 'A', company: 'Acme', url: 'https://jobs.example/a', createdAt: '2026-10-01T00:00:00Z',
@@ -165,7 +184,6 @@ describe('groupsFromApplications', () => {
       id, title: id, company: 'Acme', url: '', createdAt, tailoredResumes: [],
       coverLetters: letterAt ? [{ id: `l-${id}`, letter: 'x', createdAt: letterAt }] : [],
     })
-    // The server orders by when each application was made.
     const groups = groupsFromApplications([app('b', '2026-10-05T00:00:00+00:00'), app('a', '2026-10-01T00:00:00+00:00', '2026-10-10T00:00:00+00:00')])
     expect(groups.map((g) => g.id)).toEqual(['a', 'b'])
   })
@@ -236,8 +254,6 @@ describe('answerJobs', () => {
     expect(answerJobs(null, saved)).toEqual({ jobs: saved, jobSource: 'saved' })
   })
 
-  // Lever and Ashby put the form on its own page, which the scrapers can read
-  // as a "posting" made of form text. The saved copy has the real posting.
   test("an application page matching a saved job uses the saved job's posting", () => {
     const form = posting('https://jobs.lever.co/northwind/123/apply', 'Backend Engineer', 'Northwind', 'Submit your application Resume/CV Full name')
     const { jobs, jobSource } = answerJobs(form, saved)
@@ -246,7 +262,6 @@ describe('answerJobs', () => {
     expect(jobSource).toBe('page')
   })
 
-  // LinkedIn and Indeed tell jobs apart by the query alone.
   test('jobs whose links differ only in the query are different jobs', () => {
     const a = posting('https://www.linkedin.com/jobs/search/?currentJobId=111', 'Analyst A', 'Acme')
     const b = posting('https://www.linkedin.com/jobs/search/?currentJobId=222', 'Analyst B', 'Globex')

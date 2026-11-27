@@ -8,6 +8,47 @@ export const STORE_RATING = { value: 5, count: 5 }
 
 export const AUTHOR = { '@type': 'Person', name: 'Lincoln Laylor', url: 'https://www.linkedin.com/in/lincolnlaylor/' }
 
+export const ORG_ID = `${BASE}/#organization`
+
+const SITE_DESCRIPTION = 'Cover Me is a Chrome extension that tailors your resume and writes a cover letter for the job posting you have open, with an ATS match score and answers to application questions. It reads postings on LinkedIn, Indeed, Greenhouse, Lever, Workday, Ashby, BambooHR and Workable, and has a free plan to start.'
+
+export const jsonLdOrg = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  '@id': ORG_ID,
+  name: 'Cover Me',
+  url: BASE,
+  logo: `${BASE}/logo.png`,
+  sameAs: [
+    'https://github.com/TheLinc/cover-me',
+    'https://github.com/TheLinc',
+    'https://www.linkedin.com/in/lincolnlaylor/',
+    CHROME_STORE_URL,
+    'https://alternativeto.net/software/cover-me/about/',
+    'https://toolradar.com/tools/cover-me',
+    'https://www.opensourcealternatives.to/item/cover-me',
+    'https://www.libhunt.com/r/cover-me',
+    'https://www.saashub.com/cover-me-dev',
+    'https://www.rankmyai.com/tools/7d6bc99e-7a27-420c-bc04-03329ea46349/cover-me',
+    'https://peerlist.io/plainstackops/project/cover-me',
+  ],
+  founder: AUTHOR,
+  contactPoint: {
+    '@type': 'ContactPoint',
+    email: 'support@cover-me.dev',
+    contactType: 'customer support',
+  },
+}
+
+export const jsonLdWebSite = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Cover Me',
+  url: BASE,
+  description: SITE_DESCRIPTION,
+  publisher: { '@id': ORG_ID },
+}
+
 export const OG_IMAGE = { url: `${BASE}/opengraph-image`, width: 1200, height: 630, alt: 'Cover Me: tailor your resume to any job posting' }
 
 // `version` is left out when GitHub can't be read, rather than naming a stale one. (#154)
@@ -19,12 +60,13 @@ export const jsonLdApp = (version: string | null) => ({
   applicationSubCategory: 'Browser Extension',
   operatingSystem: 'Windows, macOS, Linux, ChromeOS',
   ...(version ? { softwareVersion: version } : {}),
-  description: "Open-source Chrome extension that reads the job posting you have open, tailors your resume to it, writes a matching cover letter and scores the ATS keyword match. A check removes skills your original resume doesn't support.",
+  description: `${SITE_DESCRIPTION} A check removes skills your original resume doesn't support.`,
   url: BASE,
   installUrl: CHROME_STORE_URL,
   downloadUrl: CHROME_STORE_URL,
   screenshot: `${BASE}/opengraph-image`,
   author: AUTHOR,
+  publisher: { '@id': ORG_ID },
   aggregateRating: {
     '@type': 'AggregateRating',
     ratingValue: STORE_RATING.value,

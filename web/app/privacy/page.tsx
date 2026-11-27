@@ -206,13 +206,15 @@ export default function PrivacyPage() {
             <Ul>
               <Li>
                 <strong className="text-foreground">Resume text.</strong> When you upload a PDF or DOCX
-                file, text is extracted client-side on your device. A PDF or TXT file itself is never stored or
-                transmitted. A Word (DOCX) file is kept in your browser&apos;s local storage, so tailored resumes
-                can be written into your own design, for as long as your resume or a tailored resume in History
-                uses it. On Hosted Pro, a Word file up to 2 MB is also sent to our server and stored encrypted
+                file, text is extracted client-side on your device. A PDF or Word (DOCX) file is kept in your
+                browser&apos;s local storage for as long as your resume, or a tailored resume or cover letter in
+                History, uses it, so Cover Me can read it again when its reading improves, and so tailored resumes
+                can be written into a Word file&apos;s design. A PDF is never sent to our server. A TXT file
+                isn&apos;t kept: its text is the file. On Hosted Pro, a Word file up to 2 MB is also sent to our server and stored encrypted
                 with the parsed copy of its structure, so the dashboard can download tailored resumes in your
-                design; when you upload another, files no saved tailored resume uses are deleted. In Hosted mode
-                the file name is stored, unencrypted, with your resume. In BYOK mode, the extracted text is stored only in your browser&apos;s local
+                design; when you upload another, files no saved tailored resume uses are deleted. In Hosted mode,
+                the file&apos;s name and upload date are stored without encryption, so you can see which resume you
+                uploaded; the resume text itself is encrypted, as described below. In BYOK mode, the extracted text is stored only in your browser&apos;s local
                 storage. In Hosted mode, the extracted text is transmitted to our server over HTTPS and
                 stored in an encrypted database, and a copy is kept in local storage in the browser you
                 use; from version 1.3.0, signing in on another browser downloads it, so you don&apos;t
@@ -675,13 +677,13 @@ export default function PrivacyPage() {
             <Ul>
               <Li>All on-device data is stored in <code className="text-brand-light font-mono text-[13px]">chrome.storage.local</code>, never in <code className="text-brand-light font-mono text-[13px]">chrome.storage.sync</code>, cookies, or <code className="text-brand-light font-mono text-[13px]">localStorage</code>. The one exception is a &ldquo;Not now&rdquo; flag in <code className="text-brand-light font-mono text-[13px]">chrome.storage.session</code>, cleared when Chrome restarts.</Li>
               <Li>API keys (BYOK mode) are encrypted with AES-256-GCM through the Web Crypto API before being written to storage. The random key that encrypts them is stored alongside them, so this keeps the key from being read at a glance, not from someone with access to your browser profile. The plaintext key exists in memory only for the duration of a single API call.</Li>
-              <Li>Resume text, the Word file you uploaded (if any) and cover letter history are stored unencrypted in your browser&apos;s local storage, in every mode. In Hosted mode the copies on our server are encrypted; the local copies stay on your device.</Li>
+              <Li>Resume text, the PDF or Word file you uploaded (if any) and cover letter history are stored unencrypted in your browser&apos;s local storage, in every mode. In Hosted mode the copies on our server are encrypted; the local copies stay on your device.</Li>
             </Ul>
 
             <H3>Server-side storage</H3>
             <Ul>
               <Li>Resume text, a parsed copy of its structure and, on Hosted Pro, your Word file are encrypted with AES-256-GCM before being stored in our Supabase Postgres database. The encryption key is derived from a server-side secret. Plaintext resume text is never persisted to disk.</Li>
-              <Li>Cover letters and tailored resumes (Pro mode) are encrypted with AES-256-GCM before storage. The job title, company, posting address, dates and application stage (every Hosted account), and each tailored resume&apos;s ATS match score and missing keywords (Pro mode), are stored unencrypted so you can search and filter them. Your resume's file name is stored unencrypted too.</Li>
+              <Li>Cover letters and tailored resumes (Pro mode) are encrypted with AES-256-GCM before storage. The job title, company, posting address, dates and application stage (every Hosted account), and each tailored resume&apos;s ATS match score and missing keywords (Pro mode), are stored unencrypted so you can search and filter them. Your resume's file name and upload date are stored unencrypted too.</Li>
               <Li>Rate-limit counters (all modes) hold only a keyed hash of an IP address, or a hash of your account ID when a new resume is read or a support message is sent, and a counter not updated for two days is deleted at the next cleanup.</Li>
               <Li>All data in transit is protected by TLS 1.2 or higher (enforced by Supabase and Vercel).</Li>
               <Li>Database access is protected by Supabase Row-Level Security policies. Users can only access their own data rows.</Li>
@@ -712,7 +714,7 @@ export default function PrivacyPage() {
                   name: 'Supabase',
                   url: 'https://supabase.com/privacy',
                   when: 'Every mode (reading job postings, from version 1.3.0, and site requests and bug reports when you press the button), the website ATS checker when you run a check; everything else Hosted mode only',
-                  receives: 'Copies of the job pages you ask us to read, which are processed and not stored, site requests and bug reports, passed on to PostHog and not stored, the posting and resume you check on the website ATS checker, passed on to Anthropic and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: the job details, any facts you add, the application question when you ask for an answer (not stored) and, when you regenerate, the previous tailored resume, sent with each generation request (not stored, except Pro history); messages from the dashboard\'s support form, passed on to Resend and not stored; email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with the unencrypted fields that go with them (Pro), your encrypted Word file and which tailored resumes were made from it (Pro), your resume\'s file name, your Stripe customer ID, your Google name, picture link and account ID, session tokens, generation and answer counts, whether and when you opted out of usage counts, when you removed the extension (if you were signed in), the sites you asked to hear back about with your account ID, and the account-keyed counter used when a new resume is read or a support message is sent (see Information We Collect for each). Supabase Auth also records the IP address and browser of each signed-in session, kept with your account. Supabase hosts our backend functions, authentication system and database, and keeps standard request logs (IP address, browser, time, and the address requested, which can include a dashboard search) for a short period.',
+                  receives: 'Copies of the job pages you ask us to read, which are processed and not stored, site requests and bug reports, passed on to PostHog and not stored, the posting and resume you check on the website ATS checker, passed on to Anthropic and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: the job details, any facts you add, the application question when you ask for an answer (not stored) and, when you regenerate, the previous tailored resume, sent with each generation request (not stored, except Pro history); messages from the dashboard\'s support form, passed on to Resend and not stored; email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with the unencrypted fields that go with them (Pro), your encrypted Word file and which tailored resumes were made from it (Pro), your resume\'s file name and upload date, your Stripe customer ID, your Google name, picture link and account ID, session tokens, generation and answer counts, whether and when you opted out of usage counts, when you removed the extension (if you were signed in), the sites you asked to hear back about with your account ID, and the account-keyed counter used when a new resume is read or a support message is sent (see Information We Collect for each). Supabase Auth also records the IP address and browser of each signed-in session, kept with your account. Supabase hosts our backend functions, authentication system and database, and keeps standard request logs (IP address, browser, time, and the address requested, which can include a dashboard search) for a short period.',
                 },
                 {
                   name: 'Cloudflare Turnstile',

@@ -1,6 +1,6 @@
 # Cover Me
 
-> Cover Me (cover-me.dev) is a Chrome extension for job seekers that tailors the user's resume and writes a matching cover letter for the job posting they have open. It also writes answers to the written questions on job applications: the user right-clicks the question box, and Cover Me types an answer from their resume and the posting into it. It shows an ATS match score with the keywords the resume is missing, and a check removes any skill or claim the original resume doesn't support. It reads postings when the user clicks, on LinkedIn, Indeed, Greenhouse, Lever, Workday, Ashby, BambooHR and Workable, and the user can paste a posting from any other site. There is a free plan. It is open source (MIT), built by Lincoln Laylor, and unrelated to the "CoverMe AI" project on GitHub.
+> Cover Me (cover-me.dev) is a Chrome extension for job seekers that tailors the user's resume and writes a matching cover letter for the job posting they have open. It also writes answers to the written questions on job applications: the user right-clicks the question box, and Cover Me types an answer from their resume and the posting into it. It shows an ATS match score with the keywords the resume is missing, and a check removes any skill or claim the original resume doesn't support. It reads postings when the user clicks, on LinkedIn, Indeed, Greenhouse, Lever, Workday, Ashby, BambooHR and Workable, and the user can paste a posting from any other site. There is a free plan. It is built by Lincoln Laylor and is unrelated to the "CoverMe AI" project on GitHub.
 
 Key facts:
 - Pricing: a free account gets 10 AI generations to start, then 5 a week, for letters and tailored resumes, plus 5 answers to application questions to start, then 5 a week. Pro is $15/month or $35 every 3 months for up to 25 generations and up to 50 answers a day, with every application saved and searchable on the dashboard. Answers are counted apart from letters and resumes and never use them up. It is also free and unlimited with the user's own Claude or OpenAI API key, with no account needed.
@@ -14,7 +14,8 @@ Key facts:
 - Applications board: with an account, every job the user generates for appears on a board on the dashboard, with the stages Applied, Interviewing, Offer and Closed. Free accounts keep the job's title, company and link. Pro also keeps the letters and resumes.
 - History without an account: the extension keeps the user's last 50 letters and 20 tailored resumes in the browser.
 - Not included by design: no auto-apply or form submission, no LinkedIn account integration, no resume builder: it tailors the resume the user uploads.
-- Open source: the extension, backend and database schema are public and self-hostable at https://github.com/TheLinc/cover-me
+- Resume keyword pages: each page counts the skills, tools and degrees that real public job postings for one job ask for, read from company job boards on Greenhouse and Lever with the same rules as the free ATS checker. A keyword counts when a posting asks for it as a requirement or a nice-to-have. Each page gives each keyword as a share and a count of the postings read, grouped into tools, skills, education and soft skills, with the number of companies, the sources and the date. The postings come mostly from tech companies. Each page also shows where to put the keywords on a resume, with example bullets.
+- Open source: the extension, backend and database schema are public and self-hostable on [GitHub](https://github.com/TheLinc/cover-me)
 
 ## Main pages
 
@@ -43,8 +44,6 @@ Key facts:
 - [Cover Me for Ashby](https://www.cover-me.dev/for/ashby)
 
 ## Resume keywords by job
-
-Each page counts the skills, tools and degrees that real public job postings for one job ask for, read from company job boards on Greenhouse and Lever with the same rules as the free ATS checker. A keyword counts when a posting asks for it as a requirement or a nice-to-have. Each page gives each keyword as a share and a count of the postings read, grouped into tools, skills, education and soft skills, with the number of companies, the sources and the date. The postings come mostly from tech companies. Each page also shows where to put the keywords on a resume, with example bullets.
 
 - [Resume keywords by job](https://www.cover-me.dev/resume-keywords)
 - [Sales resume keywords](https://www.cover-me.dev/resume-keywords/sales)

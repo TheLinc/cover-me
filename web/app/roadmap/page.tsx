@@ -10,8 +10,7 @@ import { getRoadmap } from '@/lib/roadmap'
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const DESCRIPTION = "What's new in Cover Me and what's coming next."
 
-// For search results and link previews; DESCRIPTION is the line under the H1.
-const META_DESCRIPTION = "Features rolling out, coming next and recently shipped in Cover Me, the open-source Chrome extension that tailors your resume and writes cover letters."
+const META_DESCRIPTION = "Features rolling out, coming next and recently shipped in Cover Me, the Chrome extension that tailors your resume and writes cover letters."
 
 export const revalidate = 3600
 

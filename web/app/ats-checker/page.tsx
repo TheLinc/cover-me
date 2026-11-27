@@ -4,7 +4,7 @@ import { AtsChecker } from '@/components/site/AtsChecker'
 import { FileTextIcon, ShieldCheckIcon, UserMinusIcon } from '@phosphor-icons/react/dist/ssr'
 import { SiteFooter } from '@/components/site/SiteFooter'
 import { SiteNav } from '@/components/site/SiteNav'
-import { BASE, OG_IMAGE } from '@/lib/structured-data'
+import { BASE, OG_IMAGE, ORG_ID } from '@/lib/structured-data'
 
 const PAGE_URL = `${BASE}/ats-checker`
 const TITLE = 'Free ATS Resume Checker: Find Missing Keywords | Cover Me'
@@ -30,6 +30,7 @@ const jsonLd = [
     operatingSystem: 'Any',
     browserRequirements: 'Requires JavaScript',
     isAccessibleForFree: true,
+    publisher: { '@id': ORG_ID },
     featureList: [
       'Scores the resume out of 100 the same way as the Cover Me extension',
       "Lists the posting's must-have and nice-to-have skills, tools and certifications",

@@ -15,7 +15,7 @@ describe('parseResumeStructure streams', () => {
   test('Claude: joins the text deltas', async () => {
     const fetch = vi.fn(async (_url: string, _init: RequestInit) => sse([json.slice(0, 20), json.slice(20)].map((text) => ({ type: 'content_block_delta', delta: { type: 'text_delta', text } }))))
     vi.stubGlobal('fetch', fetch)
-    expect(await parseResumeStructure('r', 'claude', 'k')).toEqual({ ...RESUME, otherSections: [], sectionOrder: [], linksKept: true })
+    expect(await parseResumeStructure('r', 'claude', 'k')).toEqual({ ...RESUME, otherSections: [], sectionOrder: [], linksKept: true, parseVersion: 1 })
     expect(JSON.parse(fetch.mock.calls[0]![1].body as string).stream).toBe(true)
   })
   test('Claude: asks Haiku 5.5 at low effort, with room for a resume at the length cap', async () => {
@@ -32,7 +32,7 @@ describe('parseResumeStructure streams', () => {
       { type: 'content_block_delta', index: 0, delta: { type: 'signature_delta', signature: 'sig' } },
       { type: 'content_block_delta', index: 1, delta: { type: 'text_delta', text: json } },
     ])))
-    expect(await parseResumeStructure('r', 'claude', 'k')).toEqual({ ...RESUME, otherSections: [], sectionOrder: [], linksKept: true })
+    expect(await parseResumeStructure('r', 'claude', 'k')).toEqual({ ...RESUME, otherSections: [], sectionOrder: [], linksKept: true, parseVersion: 1 })
   })
   test('Claude: a refusal (no text) surfaces as the parse error', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => sse([{ type: 'message_delta', delta: { stop_reason: 'refusal' } }])))
@@ -41,7 +41,7 @@ describe('parseResumeStructure streams', () => {
   test('OpenAI: joins the Chat Completions deltas', async () => {
     const fetch = vi.fn(async (_url: string, _init: RequestInit) => sse([json.slice(0, 20), json.slice(20)].map((content) => ({ choices: [{ delta: { content } }] }))))
     vi.stubGlobal('fetch', fetch)
-    expect(await parseResumeStructure('r', 'openai', 'k')).toEqual({ ...RESUME, otherSections: [], sectionOrder: [], linksKept: true })
+    expect(await parseResumeStructure('r', 'openai', 'k')).toEqual({ ...RESUME, otherSections: [], sectionOrder: [], linksKept: true, parseVersion: 1 })
     expect(JSON.parse(fetch.mock.calls[0]![1].body as string).stream).toBe(true)
   })
   test("OpenAI: a mid-stream error surfaces OpenAI's message", async () => {
@@ -135,6 +135,12 @@ describe('isCurrentParse', () => {
     expect(isCurrentParse({ ...RESUME, sectionOrder: [] } as unknown as ParsedResume)).toBe(false)
     expect(isCurrentParse({ ...RESUME, otherSections: [], sectionOrder: [] } as unknown as ParsedResume)).toBe(false)
     expect(isCurrentParse(parseParsedJson(json))).toBe(true)
+  })
+
+  test('a parse with all three flags and no parseVersion is current, so switching to the number re-parses nobody (#401)', () => {
+    const flagged = { ...RESUME, otherSections: [], sectionOrder: [], linksKept: true } as unknown as ParsedResume
+    expect(isCurrentParse(flagged)).toBe(true)
+    expect(isCurrentParse({ ...flagged, parseVersion: 0 })).toBe(false)
   })
 
   test('a parse from before the link fix can still take a chosen order; one from before section order cannot', () => {
