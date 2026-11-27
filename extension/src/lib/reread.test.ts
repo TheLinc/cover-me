@@ -25,11 +25,12 @@ function fakeChrome(data: Record<string, unknown>) {
   })
 }
 
-function fakeAccount(remotes: Array<Record<string, unknown> | null>, postStatus = 200) {
+function fakeAccount(remotes: Array<Record<string, unknown> | null>, ...postStatuses: number[]) {
   const posts: Array<Record<string, unknown>> = []
   vi.stubGlobal('fetch', vi.fn(async (_url: string, init?: RequestInit) => {
     if (init?.method === 'POST') {
       posts.push(JSON.parse(init.body as string))
+      const postStatus = (postStatuses.length > 1 ? postStatuses.shift() : postStatuses[0]) ?? 200
       return new Response(postStatus === 409 ? '{"error":"Resume changed"}' : '{"success":true}', { status: postStatus })
     }
     const remote = remotes.length > 1 ? remotes.shift()! : remotes[0]
@@ -86,7 +87,7 @@ describe('refreshResume (#401)', () => {
     const resume = local.resume as ResumeData
     expect(resume).toMatchObject({ text: 'Pat new text', readerVersion: READER_VERSION, file: { id, size: BYTES.length, type: 'pdf' } })
     expect(resume.parsed).toBeUndefined()
-    expect(resume.updatedAt).not.toBe(pdf().updatedAt)
+    expect(resume.updatedAt).toBe(pdf().updatedAt)
     expect(local[`designFile:${id}`]).toEqual({ data: toBase64(BYTES) })
     expect(local[`designFile:${OLD_ID}`]).toBeUndefined()
     expect(sent).toEqual([])
@@ -143,6 +144,25 @@ describe('refreshResume (#401)', () => {
       text: 'Pat new text', filename: 'Pat.pdf', readerVersion: READER_VERSION, reread: true,
       baseTextHash: await sha256Hex(new TextEncoder().encode('Pat old text')),
     }])
+    expect((local.resume as ResumeData).rereadFrom).toBeUndefined()
+  })
+
+  test('a re-read the account never confirmed is sent again on the next open, and the file stays', async () => {
+    store(pdf({ accountId: 'me' }), hosted)
+    const id = await fileId(BYTES)
+    const posts = fakeAccount([
+      { text: 'Pat old text', filename: 'Pat.pdf', updated_at: '2026-10-01T00:00:00.000Z' },
+      { text: 'Pat new text', filename: 'Pat.pdf', updated_at: '2026-11-26T00:00:00.000Z', reader_version: READER_VERSION },
+    ], 503, 200)
+    expect(await refreshResume({ read: reads('Pat new text') })).toBe('failed')
+    expect(local.resume).toMatchObject({ text: 'Pat new text', file: { id }, rereadFrom: await sha256Hex(new TextEncoder().encode('Pat old text')) })
+
+    expect(await refreshResume({ read: reads('Pat new text') })).toBe('none')
+    expect(posts).toHaveLength(2)
+    expect(posts[1]).toMatchObject({ text: 'Pat new text', reread: true, baseTextHash: posts[0]!.baseTextHash })
+    expect(local.resume).toMatchObject({ text: 'Pat new text', file: { id }, readerVersion: READER_VERSION })
+    expect((local.resume as ResumeData).rereadFrom).toBeUndefined()
+    expect(local[`designFile:${id}`]).toBeDefined()
   })
 
   test("a hosted same-text re-read records the version in the account", async () => {

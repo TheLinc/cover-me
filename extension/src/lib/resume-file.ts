@@ -18,10 +18,8 @@ export function fileType(name: string): 'pdf' | 'docx' | null {
   return (name.toLowerCase().match(/\.(pdf|docx)$/)?.[1] as 'pdf' | 'docx' | undefined) ?? null
 }
 
-// An upload on the Resume tab. A PDF or Word file is kept so it can be read
-// again when the reader improves (#401), and a Word file so tailoring can edit
-// it in place (#131). word: the file id for its design check. hosted: the
-// session to send the text with.
+// A PDF or Word file is kept so it can be read again when the reader improves
+// (#401), and a Word file so tailoring can edit it in place (#131).
 export async function saveUpload(file: File, text: string): Promise<{ resume: ResumeData; word?: string; hosted?: AuthSession }> {
   const type = fileType(file.name)
   const bytes = type ? new Uint8Array(await file.arrayBuffer()) : null

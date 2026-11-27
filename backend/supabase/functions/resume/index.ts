@@ -170,15 +170,16 @@ Deno.serve(async (req) => {
       try { previousText = await decrypt(previous.text_encrypted) } catch { /* unreadable: treat as new (#26) */ }
     }
     const sameText = previousText === text
-    if (reread && (previousText === null || await sha256Hex(previousText) !== baseTextHash)) return json({ error: 'Resume changed' }, 409)
+    // The same re-read sent again after it landed finds its own text (#401).
+    if (reread && !sameText && (previousText === null || await sha256Hex(previousText) !== baseTextHash)) return json({ error: 'Resume changed' }, 409)
     const updated_at = new Date().toISOString()
     const higherVersion = readerVersion !== null && readerVersion > (previous?.reader_version ?? 0) ? { reader_version: readerVersion } : {}
 
     // The same text again (a sign-in sync) leaves the stored text and its
     // parsed copy alone, so a parse still running for it can save its result (#26).
-    // A same-text re-read only records the reader version (#401).
     if (sameText) {
-      const { error } = await supabase.from('resumes').update(reread ? higherVersion : { filename: safeFilename, updated_at, ...higherVersion }).eq('user_id', userId)
+      const sync = { filename: safeFilename, updated_at, ...(uploadedAt ? { uploaded_at: uploadedAt } : {}) }
+      const { error } = await supabase.from('resumes').update({ ...(reread ? {} : sync), ...higherVersion }).eq('user_id', userId)
       if (error) return json({ error: 'Failed to save resume' }, 500)
       if (!wantParse || reread) return json({ success: true })
       const cached = await readParse(previous!.structured_encrypted)
@@ -203,13 +204,14 @@ Deno.serve(async (req) => {
         .eq('user_id', userId).like('text_encrypted', sameCiphertext(previous!.text_encrypted)).select('user_id')
       if (error) return json({ error: 'Failed to save resume' }, 500)
       if (!saved?.length) return json({ error: 'Resume changed' }, 409)
-    } else {
-      const { error } = await supabase.from('resumes').upsert({ user_id: userId, ...row, uploaded_at: uploadedAt }, { onConflict: 'user_id' })
-      if (error) return json({ error: 'Failed to save resume' }, 500)
-      // A sign-in sync of a different local resume is counted too: the server can't tell it from an upload (#168).
-      const fileType = safeFilename?.toLowerCase().match(/\.(pdf|docx|txt)$/)?.[1] ?? 'other'
-      EdgeRuntime.waitUntil(captureUsage(supabase, 'resume_upload', userId, { file_type: fileType }))
+      // No parse ahead: a Word file's design check parses it next, and two parses can differ (#131).
+      return json({ success: true })
     }
+    const { error } = await supabase.from('resumes').upsert({ user_id: userId, ...row, uploaded_at: uploadedAt }, { onConflict: 'user_id' })
+    if (error) return json({ error: 'Failed to save resume' }, 500)
+    // A sign-in sync of a different local resume is counted too: the server can't tell it from an upload (#168).
+    const fileType = safeFilename?.toLowerCase().match(/\.(pdf|docx|txt)$/)?.[1] ?? 'other'
+    EdgeRuntime.waitUntil(captureUsage(supabase, 'resume_upload', userId, { file_type: fileType }))
 
     if (wantParse) return heartbeatJson('resume', 'Resume parse failed', async () => ({ success: true, structured: withOlderFields(await parseNow(supabase, userId, text, text_encrypted), req) }))
     EdgeRuntime.waitUntil(parseNow(supabase, userId, text, text_encrypted))

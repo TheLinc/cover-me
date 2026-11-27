@@ -101,8 +101,11 @@ export interface ResumeData {
   // The uploaded PDF or Word file, in the design file store under id. For
   // Word, design.hash is the same id (#401).
   file?: { id: string; size: number; type: 'pdf' | 'docx' }
-  // Set by an upload only: updatedAt also moves on syncs and re-reads (#401).
+  // Set by an upload only: updatedAt also moves on syncs (#401).
   uploadedAt?: string
+  // A re-read saved here that the account hasn't confirmed: the SHA-256 of the
+  // text it replaced. The next popup open sends it again before syncing (#401).
+  rereadFrom?: string
 }
 
 export type GenerateResponse =

@@ -290,8 +290,8 @@ export function hasSectionOrder(parsed: ParsedResume | null | undefined): parsed
   return Array.isArray(parsed?.otherSections) && Array.isArray(parsed?.sectionOrder)
 }
 
-// A cached parse at PARSE_VERSION. One from before is parsed again, once. A
-// parse from before the number with all three flags counts as version 1 (#401).
+// A parse from before the number with all three flags counts as 1, so the
+// switch to the number re-parses nobody (#401).
 export function isCurrentParse(parsed: ParsedResume | null | undefined): parsed is OrderedParse {
   return hasSectionOrder(parsed) && (parsed.parseVersion ?? (parsed.linksKept === true ? 1 : 0)) >= PARSE_VERSION
 }

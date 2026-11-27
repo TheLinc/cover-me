@@ -202,6 +202,28 @@ More.`, filename: 'resume.doc' } })
       expect(Date.parse((await get()).uploaded_at)).toBe(Date.parse('2026-11-20T10:00:00.000Z'))
     })
 
+    it('a re-read sent again after it landed succeeds and keeps the text', async () => {
+      await post({ text: RESUME_TEXT })
+      const reread = { text: NEW_TEXT, reread: true, baseTextHash: sha256(RESUME_TEXT), readerVersion: 2 }
+      expect((await post(reread)).status).toBe(200)
+      expect((await post(reread)).status).toBe(200)
+      expect((await get()).text).toBe(NEW_TEXT)
+    })
+
+    it('a re-read never starts a parse ahead, so a Word check that follows parses once', async () => {
+      await uploadResume(user)
+      await post({ text: NEW_TEXT, reread: true, baseTextHash: sha256(RESUME_TEXT), readerVersion: 2 })
+      await sleep(800)
+      expect(await parsedResume(user.id)).toBeNull()
+      expect((await mockClaude.requests()).filter(isParse)).toHaveLength(0)
+    })
+
+    it('a same-text upload records its upload date', async () => {
+      await post({ text: RESUME_TEXT })
+      await post({ text: RESUME_TEXT, uploadedAt: '2026-11-21T10:00:00.000Z' })
+      expect(Date.parse((await get()).uploaded_at)).toBe(Date.parse('2026-11-21T10:00:00.000Z'))
+    })
+
     it('a re-read against changed text is refused', async () => {
       await uploadResume(user, NEW_TEXT)
       const res = await post({ text: RESUME_TEXT + '\nMore', reread: true, baseTextHash: sha256(RESUME_TEXT), readerVersion: 2 })
