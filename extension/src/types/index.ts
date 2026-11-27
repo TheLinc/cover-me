@@ -15,8 +15,7 @@ import type { PageSnapshot } from '../content/snapshot.ts'
 import type { ScraperName } from '../content/scrapers/index.ts'
 import type { JobData as ScrapedJob } from '../content/scrapers/types.ts'
 
-// logo: an https image URL read on the device (content/logo.ts, #346). The
-// scrapers' server copy doesn't have it.
+// logo is read on the device only (content/logo.ts), so the scrapers' server copy lacks it (#346).
 export type JobData = ScrapedJob & { logo?: string }
 
 export interface CoverLetter {

@@ -1,14 +1,12 @@
 import { isSupportedHost } from './scrapers/index.ts'
 
-// The employer's logo for the posting card (#346), in the order that's surest
-// to be the employer's own: the posting data, then a board's employer logo,
-// then the site's icon on the employer's own careers site. Kept out of the
-// scrapers so the server copy (scripts/sync-scrapers.mjs) doesn't change.
+// Surest to be the employer's own first. Kept out of the scrapers so their
+// server copy (scripts/sync-scrapers.mjs) doesn't change (#346).
 export function postingLogo(company: string): string | undefined {
-  return https(dataLogo()) ?? https(boardLogo()) ?? https(ownSiteIcon(company))
+  return dataLogo(company) ?? https(boardLogo()) ?? https(ownSiteIcon(company))
 }
 
-function dataLogo(): string | undefined {
+function dataLogo(company: string): string | undefined {
   for (const script of document.querySelectorAll('script[type="application/ld+json"]')) {
     let data: unknown
     try {
@@ -18,12 +16,23 @@ function dataLogo(): string | undefined {
     }
     for (const node of flatten(data)) {
       if (![node['@type']].flat().includes('JobPosting')) continue
-      const logo = (node.hiringOrganization as { logo?: string | { url?: unknown; contentUrl?: unknown } } | undefined)?.logo
-      const url = typeof logo === 'string' ? logo : logo?.url ?? logo?.contentUrl
-      if (typeof url === 'string') return url
+      const org = node.hiringOrganization as { name?: unknown; logo?: string | { url?: unknown; contentUrl?: unknown } } | undefined
+      if (typeof org?.name === 'string' && !sameCompany(org.name, company)) continue
+      const logo = org?.logo
+      const url = https(typeof logo === 'string' ? logo : String(logo?.url ?? logo?.contentUrl ?? ''))
+      if (url) return url
     }
   }
-  return document.querySelector('[itemtype*="schema.org/JobPosting"] [itemprop="hiringOrganization"] [itemprop="logo"]')?.getAttribute('content') ?? undefined
+  const el = document.querySelector('[itemtype*="schema.org/JobPosting"] [itemprop="hiringOrganization"] [itemprop="logo"]')
+  return https(el?.getAttribute('content') ?? el?.getAttribute('src') ?? el?.getAttribute('href') ?? undefined)
+}
+
+// Another posting on the page (a related-jobs block) is another company's; a
+// legal suffix ("Fernbrook Analytics, Inc.") is the same one (#346).
+function sameCompany(a: string, b: string): boolean {
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '')
+  const [x, y] = [norm(a), norm(b)]
+  return !x || !y || x.startsWith(y) || y.startsWith(x)
 }
 
 function flatten(data: unknown): Record<string, unknown>[] {
@@ -42,14 +51,17 @@ function boardLogo(): string | undefined {
 }
 
 // A site's icon is the employer's logo only on the employer's own site, so the
-// site's name (apple in jobs.apple.com) has to start with the company's first word (#346).
+// site's name has to be the company's (apple in jobs.apple.com, metacareers),
+// not merely start like it (Glass Lewis on glassdoor.com) (#346).
 // ponytail: a two-part suffix (fernbrook.co.uk) reads as "co" and gets no icon.
 function ownSiteIcon(company: string): string | undefined {
   if (isSupportedHost(location.hostname)) return undefined
-  const word = company.toLowerCase().split(/[^a-z0-9]+/).find((w) => w && w !== 'the')
+  const words = company.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean)
+  if (words[0] === 'the') words.shift()
   const labels = location.hostname.split('.')
   const site = (labels[labels.length - 2] ?? '').replace(/[^a-z0-9]/g, '')
-  if (!word || word.length < 2 || !site.startsWith(word)) return undefined
+  const names = [words[0], words.join('')].filter((n) => n && n.length >= 2)
+  if (!names.some((n) => site === n || site === n + 'careers' || site === n + 'jobs')) return undefined
   const href = (document.querySelector('link[rel~="apple-touch-icon"]') ?? document.querySelector('link[rel~="icon"]'))?.getAttribute('href')
   return href ?? undefined
 }

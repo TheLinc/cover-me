@@ -29,7 +29,11 @@ if (!w[flag]) {
         }
         try {
           const job = scrapeJobPage()
-          sendResponse({ success: true, job: { ...job, logo: postingLogo(job.company) }, snapshot } satisfies FrameScrapeResponse)
+          let logo: string | undefined
+          try {
+            logo = postingLogo(job.company)
+          } catch {}
+          sendResponse({ success: true, job: { ...job, logo }, snapshot } satisfies FrameScrapeResponse)
         } catch (err) {
           sendResponse({
             success: false,

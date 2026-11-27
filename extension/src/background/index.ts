@@ -13,7 +13,7 @@ import { savePendingUpdate } from '../lib/update'
 import { handleAnswerClick, registerAnswerMenu, writeAnswer, type AnswerRequest } from './answer'
 import { scrapeFailure } from './scrape-failure'
 import { acceptsMessage } from './sender'
-import { bestJob, CONTENT_SCRIPT_FILE, listScrapableFrames, previewTab, readFrames, topFrameUrl, type FrameScrape } from './frames'
+import { bestJob, CONTENT_SCRIPT_FILE, listScrapableFrames, previewTab, readFrames, topFrameUrl, withServerRead, type FrameScrape } from './frames'
 import type { CoverJob, CoverLetter, GenerateResponse, JobData, ScrapeFailure, ScrapeResponse, TailoredResume, TailorJob, TailorResponse } from '../types'
 
 chrome.runtime.onInstalled.addListener((details) => {
@@ -197,10 +197,7 @@ async function preferServerScrapes(results: FrameScrape[], forAnswer = false): P
     const { results: server } = await res.json() as { results: ({ ok: true; job: JobData } | { ok: false; error: string })[] }
     const byFrame = new Map(sent.map((r, i) => [r.frameId, server[i]]))
     await debugGroup('Scrape — server', { frames: sent.length, read: server.filter((s) => s.ok).length })
-    return results.map((r) => {
-      const s = byFrame.get(r.frameId)
-      return s?.ok ? { frameId: r.frameId, ok: true, job: { ...s.job, logo: r.ok ? r.job.logo : undefined } } : r
-    })
+    return results.map((r) => withServerRead(r, byFrame.get(r.frameId)))
   } catch (err) {
     await debugGroup('Scrape — server unavailable, using bundled scrapers', { error: err instanceof Error ? err.message : String(err) })
     return results

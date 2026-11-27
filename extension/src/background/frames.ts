@@ -65,8 +65,13 @@ export async function bestJob(tabId: number, results: FrameScrape[]): Promise<Jo
   return { ...job, url: (await topFrameUrl(tabId)) ?? job.url }
 }
 
+// The server reads the posting; the logo is only read on the device (#346).
+export function withServerRead(local: FrameScrape, server: { ok: true; job: JobData } | { ok: false; error: string } | undefined): FrameScrape {
+  return server?.ok ? { frameId: local.frameId, ok: true, job: { ...server.job, logo: local.ok ? local.job.logo : undefined } } : local
+}
+
 // On-device only: no page copy, no server read and no inline fallback, so
-// nothing leaves the browser before a click (#346).
+// nothing goes to Cover Me's server before a click (#346).
 export async function previewTab(tabId: number): Promise<JobData | null> {
   const { frameIds } = await listScrapableFrames(tabId)
   return (await bestJob(tabId, await readFrames(tabId, frameIds, false))) ?? null

@@ -15,16 +15,28 @@ describe('postingLogo', () => {
   afterEach(() => vi.unstubAllGlobals())
 
   test('reads the posting data logo, as a URL or an image object, in an @graph too', () => {
-    openPage('https://www.linkedin.com/jobs/view/101', ld({ '@type': 'JobPosting', hiringOrganization: { name: 'Fernbrook Analytics', logo: 'https://media.licdn.com/fernbrook.png' } }))
+    openPage('https://www.linkedin.com/jobs/view/101', ld({ '@type': 'JobPosting', hiringOrganization: { name: 'Fernbrook Analytics, Inc.', logo: 'https://media.licdn.com/fernbrook.png' } }))
     expect(postingLogo('Fernbrook Analytics')).toBe('https://media.licdn.com/fernbrook.png')
 
     openPage('https://jobs.lever.co/fernbrook/42', ld({ '@graph': [{ '@type': 'Organization' }, { '@type': ['JobPosting'], hiringOrganization: { logo: { '@type': 'ImageObject', url: 'https://lever-client-logos.s3.amazonaws.com/f.png' } } }] }))
     expect(postingLogo('Fernbrook Analytics')).toBe('https://lever-client-logos.s3.amazonaws.com/f.png')
   })
 
+  test("skips another company's posting on the page, and an http logo, for the next one", () => {
+    openPage('https://careers.fernbrook.com/42', ld([
+      { '@type': 'JobPosting', hiringOrganization: { name: 'Quarry Labs', logo: 'https://cdn.quarry.com/logo.png' } },
+      { '@type': 'JobPosting', hiringOrganization: { name: 'Fernbrook', logo: 'http://cdn.fernbrook.com/logo.png' } },
+      { '@type': 'JobPosting', hiringOrganization: { name: 'Fernbrook', logo: 'https://cdn.fernbrook.com/logo.png' } },
+    ]))
+    expect(postingLogo('Fernbrook')).toBe('https://cdn.fernbrook.com/logo.png')
+  })
+
   test('reads a microdata logo', () => {
     openPage('https://jobs.smartrecruiters.com/Fernbrook/42', '', '<div itemscope itemtype="http://schema.org/JobPosting"><div itemprop="hiringOrganization" itemscope><meta itemprop="name" content="Fernbrook"><meta itemprop="logo" content="https://c.smartrecruiters.com/fernbrook/huge"></div></div>')
     expect(postingLogo('Fernbrook')).toBe('https://c.smartrecruiters.com/fernbrook/huge')
+
+    openPage('https://careers.example.org/42', '', '<div itemscope itemtype="https://schema.org/JobPosting"><div itemprop="hiringOrganization" itemscope><img itemprop="logo" src="https://cdn.example.org/fernbrook.png"></div></div>')
+    expect(postingLogo('Fernbrook')).toBe('https://cdn.example.org/fernbrook.png')
   })
 
   test("takes Greenhouse's and Workday's employer logo from the share image, not other boards'", () => {
@@ -47,6 +59,9 @@ describe('postingLogo', () => {
 
     openPage('https://careers.homedepot.com/job/42', ICONS)
     expect(postingLogo('The Home Depot')).toBe('https://careers.homedepot.com/touch-icon.png')
+
+    openPage('https://www.metacareers.com/jobs/42', ICONS)
+    expect(postingLogo('Meta Platforms')).toBe('https://www.metacareers.com/touch-icon.png')
   })
 
   test("never uses a job board's or another company's site icon", () => {
@@ -55,6 +70,10 @@ describe('postingLogo', () => {
 
     openPage('https://builtin.com/job/platform-engineer/42', ICONS)
     expect(postingLogo('Fernbrook Analytics')).toBeUndefined()
+    expect(postingLogo('Built Technologies')).toBeUndefined()
+
+    openPage('https://www.glassdoor.com/job-listing/42', ICONS)
+    expect(postingLogo('Glass Lewis')).toBeUndefined()
   })
 
   test('keeps only https images', () => {

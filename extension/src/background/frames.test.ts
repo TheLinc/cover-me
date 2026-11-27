@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { previewTab } from './frames'
+import { previewTab, withServerRead } from './frames'
 import type { FrameScrapeResponse, JobData } from '../types'
 
 const TOP_JOB: JobData = { title: 'Platform Engineer', company: 'Fernbrook Analytics', description: 'Build the data platform.', url: 'https://www.linkedin.com/jobs/view/101' }
@@ -55,5 +55,15 @@ describe('previewTab', () => {
 
     expect(await previewTab(1)).toBeNull()
     expect(fetch).not.toHaveBeenCalled()
+  })
+})
+
+describe('withServerRead', () => {
+  it("takes the server's job and keeps the logo read on the device", () => {
+    const local = { frameId: 0, ok: true as const, job: { ...TOP_JOB, logo: 'https://media.licdn.com/fernbrook.png' } }
+    const server = { ok: true as const, job: { ...TOP_JOB, description: 'The full posting, read on the server.' } }
+
+    expect(withServerRead(local, server)).toEqual({ frameId: 0, ok: true, job: { ...server.job, logo: 'https://media.licdn.com/fernbrook.png' } })
+    expect(withServerRead(local, { ok: false, error: 'No posting' })).toBe(local)
   })
 })
