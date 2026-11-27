@@ -519,7 +519,7 @@ Deno.serve(async (req) => {
     if (previous && JSON.stringify(previous).length > MAX_RESUME_JSON) return json({ error: 'Invalid request body' }, 400)
     // Not resume content for the model to revise (#131).
     if (previous) {
-      const { sourceHash: _h, designFellBack: _f, ...rest } = previous
+      const { sourceHash: _h, designFellBack: _f, source: _s, ...rest } = previous
       previous = rest
     }
     localId = isUuid(body.localId) ? body.localId : undefined
@@ -742,7 +742,7 @@ ${job.description}`)
         const row = {
           user_id: userId,
           job_application_id: jobAppId,
-          // The dashboard can name the resume it was made from (#401).
+          // On the saved copy only: the extension stamps its own, with the file id only it knows (#401).
           resume_json_encrypted: await encrypt(JSON.stringify({ ...resume, source: { filename: resumeRow.filename ?? 'resume', uploadedAt: resumeRow.uploaded_at ?? resumeRow.updated_at } })),
           ats_score: atsScore ?? null,
           ats_gaps: atsGaps ?? null,

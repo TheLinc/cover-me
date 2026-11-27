@@ -14,7 +14,7 @@ import { handleAnswerClick, registerAnswerMenu, writeAnswer, type AnswerRequest 
 import { scrapeFailure } from './scrape-failure'
 import { acceptsMessage } from './sender'
 import type { PageSnapshot } from '../content/snapshot.ts'
-import type { CoverJob, CoverLetter, FrameScrapeResponse, GenerateResponse, JobData, ScrapeFailure, ScrapeResponse, TailoredResume, TailorJob, TailorResponse } from '../types'
+import type { CoverJob, CoverLetter, FrameScrapeResponse, GenerateResponse, JobData, ResumeSource, ScrapeFailure, ScrapeResponse, TailoredResume, TailorJob, TailorResponse } from '../types'
 
 chrome.runtime.onInstalled.addListener((details) => {
   void handleInstalled(details)
@@ -101,13 +101,14 @@ async function recordTailored(
   resume: TailoredResume,
   id: string = crypto.randomUUID(),
   owner?: { account?: string; saveTo?: string },
+  source?: ResumeSource,
 ): Promise<void> {
-  const source = await currentSource()
   await addToTailoredHistory({ id, job, resume: source ? { ...resume, source } : resume, createdAt: new Date().toISOString(), ...owner }).catch(() => {})
 }
 
-// Stamped here, not on the server, so History knows the file on this computer (#401).
-async function currentSource() {
+// Stamped here as well as on the server, since only this computer knows the
+// file id. Read when a run starts: an upload during the run isn't its source (#401).
+async function currentSource(): Promise<ResumeSource | undefined> {
   const resume = await getResume().catch(() => null)
   return resume ? resumeSource(resume) : undefined
 }
@@ -420,6 +421,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
   const id = jobId ?? crypto.randomUUID()
   const startedAt = Date.now()
   await setTailorJob({ id, status: 'loading', job, startedAt })
+  const source = await currentSource()
   // Which file a result came from isn't resume content for the model to revise (#131)
   const { sourceHash: _h, designFellBack: _f, source: _s, ...previous } = lastResult ?? {} as TailoredResume
   try {
@@ -477,7 +479,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       await recordTailored(job, resume, localId, {
         ...(savedId === localId ? { account: session.user.id } : {}),
         ...(pro ? { saveTo: session.user.id } : {}),
-      })
+      }, source)
       await setTailorJob({ id, status: 'done', job, resume, startedAt, entryId: localId, note })
       return { success: true, resume, job }
     }
@@ -510,7 +512,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     const tailored = await finishDesign(await tailorResume(job, parsed, settings.provider, apiKey, compact, merged, trim, includeSummary, lastResult && previous, onProgress), design)
     if (note) tailored.hasEdits = true
     const entryId = crypto.randomUUID()
-    await recordTailored(job, tailored, entryId)
+    await recordTailored(job, tailored, entryId, undefined, source)
     await setTailorJob({ id, status: 'done', job, resume: tailored, startedAt, entryId, note })
     return { success: true, resume: tailored, job }
   } catch (err) {
@@ -550,6 +552,7 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
       if (!session) {
         return failCover(id, job, startedAt, 'Sign in to your Cover Me account in Settings.')
       }
+      const source = await currentSource()
       const [letter, tier] = await Promise.all([generateViaBackend(job, session.access_token, merged), checkedTier(session)])
       const pro = tier === 'hosted_pro'
       const entry: CoverLetter = {
@@ -558,7 +561,7 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
         letter,
         createdAt: new Date().toISOString(),
         ...(pro ? { saveTo: session.user.id } : {}),
-        source: await currentSource(),
+        source,
       }
       await addToHistory(entry)
       if (pro) {

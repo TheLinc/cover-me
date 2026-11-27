@@ -139,7 +139,14 @@ export function withLocalOnly(server: JobGroup[], letters: CoverLetter[], tailor
   const mine = unclaimed(userId)
   const local = groupLocalHistory(letters.filter(mine), tailored.filter(mine))
     .map((g) => ({ ...g, key: `local:${g.key}`, localOnly: true }))
-  return [...server, ...local].sort((a, b) => b.latestAt.localeCompare(a.latestAt))
+  // The account's copies have no file id; the same entry saved here has (#401).
+  const sources = new Map([...letters.map((l) => [l.id, l.source] as const), ...tailored.map((t) => [t.id, t.resume.source] as const)].filter(([, s]) => s))
+  const withSources = server.map((g) => ({
+    ...g,
+    coverLetters: g.coverLetters.map((c) => (sources.has(c.id) ? { ...c, source: sources.get(c.id) } : c)),
+    tailoredResumes: g.tailoredResumes.map((t) => (sources.has(t.id) ? { ...t, resume: { ...t.resume, source: sources.get(t.id) } } : t)),
+  }))
+  return [...withSources, ...local].sort((a, b) => b.latestAt.localeCompare(a.latestAt))
 }
 
 // Counts jobs, not entries, because the list and dashboard count jobs (#24).

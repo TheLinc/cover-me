@@ -21,14 +21,6 @@ export default function HistoryPage() {
   const [previewId, setPreviewId] = useState<string | null>(null)
   const [designHashes, setDesignHashes] = useState<string[]>([])
   useEffect(() => { void getDesignHashes().then(setDesignHashes) }, [])
-  // The account's copies carry no file id; the one saved here under the same id does (#401).
-  const [localSources, setLocalSources] = useState<Map<string, ResumeSource>>(new Map())
-  useEffect(() => {
-    void Promise.all([getHistory(), getTailoredHistory()]).then(([letters, tailored]) => setLocalSources(new Map([
-      ...letters.flatMap((l) => (l.source ? [[l.id, l.source] as const] : [])),
-      ...tailored.flatMap((t) => (t.resume.source ? [[t.id, t.resume.source] as const] : [])),
-    ])))
-  }, [])
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [reviewFor, setReviewFor] = useState<string | null>(null)
   const [syncing, setSyncing] = useState(false)
@@ -319,7 +311,7 @@ export default function HistoryPage() {
                           </span>
                           <span className="artifact-date">{formatDate(cl.createdAt)}</span>
                         </div>
-                        <SourceLine source={localSources.get(cl.id) ?? cl.source} stored={designHashes} />
+                        <SourceLine source={cl.source} stored={designHashes} />
                         {previewId === cl.id && (
                           <div className="letter-box letter-preview">
                             <pre className="letter-text">{cl.letter}</pre>
@@ -354,7 +346,7 @@ export default function HistoryPage() {
                           </span>
                           <span className="artifact-date">{formatDate(tr.createdAt)}</span>
                         </div>
-                        <SourceLine source={localSources.get(tr.id) ?? tr.resume.source} stored={designHashes} />
+                        <SourceLine source={tr.resume.source} stored={designHashes} />
                         {typeof tr.resume.atsScore === 'number' && (
                           <p className="artifact-meta">
                             ATS match {tr.resume.atsScore}{tr.resume.editedAt ? ' · Scored before your edits' : ''}

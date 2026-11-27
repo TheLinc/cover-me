@@ -15,6 +15,11 @@ export async function fileId(bytes: Uint8Array, readerVersion = READER_VERSION):
   return sha256Hex(all)
 }
 
+// A Word upload from before #401 kept its bytes under design.hash with no file.
+export function storedFile(resume: ResumeData): ResumeData['file'] {
+  return resume.file ?? (resume.design ? { id: resume.design.hash, size: resume.design.size, type: 'docx' } : undefined)
+}
+
 export function fileType(name: string): 'pdf' | 'docx' | null {
   return (name.toLowerCase().match(/\.(pdf|docx)$/)?.[1] as 'pdf' | 'docx' | undefined) ?? null
 }
@@ -70,5 +75,5 @@ export const fromLine = (source: ResumeSource) => line('From', source)
 
 // A resume from before #401 has no uploadedAt; updatedAt is the closest date it has.
 export function resumeSource(resume: ResumeData): ResumeSource {
-  return { filename: resume.filename, uploadedAt: resume.uploadedAt ?? resume.updatedAt, fileId: resume.file?.id }
+  return { filename: resume.filename, uploadedAt: resume.uploadedAt ?? resume.updatedAt, fileId: storedFile(resume)?.id }
 }

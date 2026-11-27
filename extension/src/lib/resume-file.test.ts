@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { toBase64 } from './design'
-import { downloadStoredFile, fileId, fileType, fromLine, resumeSource, saveUpload, usingLine } from './resume-file'
+import { downloadStoredFile, fileId, fileType, fromLine, resumeSource, saveUpload, storedFile, usingLine } from './resume-file'
 import { saveDesignFile } from './storage'
 
 const saveFileMock = vi.hoisted(() => vi.fn())
@@ -101,6 +101,12 @@ describe('the uploaded file, seen (#401)', () => {
   test('fromLine names the source file and its upload date', () => {
     const year = new Date().getFullYear()
     expect(fromLine({ filename: 'Pat.pdf', uploadedAt: `${year}-02-03T12:00:00Z` })).toBe('From Pat.pdf, uploaded Feb 3')
+  })
+
+  test('a Word file kept before #401, under design.hash with no file, still counts as stored', () => {
+    const word = { text: 'x', filename: 'Pat.docx', updatedAt: 'U', design: { hash: 'h', size: 3, status: 'done' as const } }
+    expect(storedFile(word)).toEqual({ id: 'h', size: 3, type: 'docx' })
+    expect(resumeSource(word)).toEqual({ filename: 'Pat.docx', uploadedAt: 'U', fileId: 'h' })
   })
 
   test('resumeSource names the file and falls back to updatedAt', () => {
