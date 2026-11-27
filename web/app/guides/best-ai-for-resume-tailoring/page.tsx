@@ -78,7 +78,7 @@ const RESUMES = [
   { tool: 'Claude', docs: '3', high: '0', medium: '1', sendable: '2 of 3', quality: '3.7' },
   { tool: 'ChatGPT', docs: '3', high: '0', medium: '1', sendable: '2 of 3', quality: '3.3' },
   { tool: 'Rezi', docs: '1', high: '0', medium: '0', sendable: '1 of 1', quality: '3.0' },
-  { tool: 'Jobscan', docs: '3', high: '4', medium: '3', sendable: '0 of 3', quality: '2.0' },
+  { tool: 'Jobscan', docs: '3', high: '4', medium: '3', sendable: '0 of 3', quality: 'Not scored' },
   { tool: 'Teal', docs: '2', high: '3', medium: '2', sendable: '0 of 2', quality: '1.5' },
 ]
 
@@ -164,7 +164,7 @@ export default function Page() {
               </p>
               <ul>
                 <li>Cover Me: built from its main branch on November 26 (version 1.10.0 plus unreleased changes), on a Pro account, posting pasted in, default options. It uses the same Claude Sonnet 5.5 model as the Claude chat.</li>
-                <li>Jobscan: the Premium trial, AI Optimize with the default Fast setting. Jobscan shows its edits as suggestions, and I scored what &ldquo;Accept All&rdquo; would produce.</li>
+                <li>Jobscan: the Premium trial, AI Optimize with the default Fast setting. Jobscan shows its edits as suggestions, and I counted the claims in what &ldquo;Accept All&rdquo; would produce. For two of its three resumes the scorer saw the deleted and added words run together, so Jobscan&rsquo;s resumes get no writing score.</li>
                 <li>Teal: a free account. Free AI credits ran out after two cover letters and two AI summaries, so the marketing case has neither.</li>
                 <li>Rezi: a free account, which allows one AI conversation, so only the developer resume. Rezi offers its changes as checkboxes; I ticked both of its suggested optimizations, one of which the resume doesn&rsquo;t support, and left the four gaps unticked. Its cover letters are paid only.</li>
               </ul>
@@ -193,7 +193,7 @@ export default function Page() {
                 All three resumes kept the facts of every bullet and added none of the missing requirements. Under &ldquo;Missing&rdquo;, each result lists what the posting wants and the resume lacks: Redux, Kubernetes and CI/CD for the developer, ACLS, critical care, CCRN and Cerner for the nurse, and Meta Ads, ROAS and attribution for the marketer. The cost of that is a modest score: the ATS match went from 60 to 63, 54 to 54, and 48 to 60. It won&rsquo;t raise the number with skills you don&rsquo;t have. <Link href="/guides/what-is-an-ats-score">What an ATS score measures</Link> explains why a lower true score beats a higher false one.
               </p>
               <p>
-                Three small flaws: the nurse&rsquo;s list named ACLS twice, the marketer&rsquo;s list said the posting wants 3+ years of growth work and the applicant has about 1, though the resume shows Google Ads campaigns since January 2023, and the marketer&rsquo;s summary ended on the odd phrase &ldquo;to a first growth hire&rdquo;.
+                Three small flaws: the nurse&rsquo;s list named ACLS twice, the marketer&rsquo;s list said the posting wants 3+ years of growth work and the applicant has about 1, though the resume shows Google Ads campaigns in a role held since January 2023, and the marketer&rsquo;s summary ended on the odd phrase &ldquo;to a first growth hire&rdquo;.
               </p>
               <h3>Claude and ChatGPT</h3>
               <p>

@@ -93,7 +93,7 @@ export default function Page() {
       ]}
       intro={
         <p>
-          I build Cover Me, which also tailors resumes, so weigh this review with that in mind. Prices are from Jobscan&rsquo;s plan page and reviews from Trustpilot and Reddit, all checked on November 19, 2026. For this review I didn&rsquo;t create a Jobscan account, so what it does after sign-up comes from its own pages and from users, apart from a later test of AI Optimize on November 26, 2026.
+          I build Cover Me, which also tailors resumes, so weigh this review with that in mind. Prices are from Jobscan&rsquo;s plan page and reviews from Trustpilot and Reddit, all checked on November 19, 2026. I reviewed it without an account, so what it does after sign-up comes from its own pages and from users. On November 26, 2026 I also tested AI Optimize on the 7-day trial, described below.
         </p>
       }
       sections={[
