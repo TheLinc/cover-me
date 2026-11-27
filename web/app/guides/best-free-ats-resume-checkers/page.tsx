@@ -46,9 +46,7 @@ const SRC = {
   kickresume: 'https://www.kickresume.com/en/resume-checker/',
 }
 
-type Row = { name: string; limit: string; account: string; posting: string; result: string; sources: { label: string; href: string }[] }
-
-const TOOLS: Row[] = [
+const TOOLS = [
   { name: 'Jobscan', limit: '5 resume scans a month', account: 'Yes', posting: 'Yes', result: 'Match rate, searchability tips and a short skills list', sources: [{ label: 'Plans', href: SRC.jobscanPlan }, { label: 'Premium', href: SRC.jobscanPremium }] },
   { name: 'SkillSyncer', limit: '2 job match scans and 10 AI credits a week', account: 'Yes, no card', posting: 'Yes', result: 'Match score, missing keywords and formatting issues', sources: [{ label: 'Pricing', href: SRC.skillsyncer }] },
   { name: 'Teal', limit: 'Top 5 keywords for each job', account: 'Yes', posting: 'Yes', result: 'Basic resume analysis and the top 5 keywords', sources: [{ label: 'Pricing', href: SRC.teal }] },
