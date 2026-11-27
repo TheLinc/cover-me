@@ -185,11 +185,11 @@ export const GUIDES: Guide[] = [
   {
     slug: 'best-free-ats-resume-checkers',
     title: 'Best free ATS resume checkers (2026), compared',
-    description: "Eleven free ATS resume checkers compared on what the free plan allows, whether you need an account, whether it reads a job description, and what the result shows. Every limit is from the tool's own pages, checked November 27, 2026.",
+    description: "Eight free ATS resume checkers run on the same made-up resume, which lacked 4 of the posting's keywords. Which ones found them, what each free plan hid, and the free limits of eleven, checked November 27, 2026.",
     date: '2026-11-27',
     image: '/guides/best-free-ats-resume-checkers.png',
     imageAlt:
-      "Table of free ATS resume checkers, from each tool's own pages on November 27, 2026. Jobscan: 5 scans a month with an account. SkillSyncer: 2 job match scans a week with an account. Teal: the top 5 keywords for a job with an account. ResyMatch: 7 free credits a month with an account. Resume.io: no stated limit, with an email sign-up. Cover Me's checker: 25 scans a day with no account.",
+      "How many of the 4 missing keywords each free ATS checker found on the same made-up resume, tested November 27, 2026. Resume Worded, Rezi and Cover Me: 4 of 4. Jobscan, SkillSyncer and ResyMatch: 3 of 4, all missing Gainsight. Enhancv: 2 shown on the free plan. Teal: 0 shown on the free plan.",
   },
 ]
 

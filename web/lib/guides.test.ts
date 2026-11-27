@@ -253,13 +253,27 @@ describe('the free ATS resume checkers guide', () => {
     expect(t.absolute.length).toBeLessThan(60)
   }, 20_000)
 
-  it('links a source on every row of the comparison table, with the check date in its caption', async () => {
-    const html = await render()
-    const table = html.slice(html.indexOf('<table'), html.indexOf('</table>'))
-    expect(html.slice(html.indexOf('</table>'), html.indexOf('</figure>', html.indexOf('</table>')))).toContain('checked November 27, 2026')
-    const rows = table.split('<tbody>')[1].split('</tr>').filter((r) => r.includes('<tr'))
+  const figures = (html: string) => [...html.matchAll(/<figure[^>]*>(.*?)<\/figure>/g)].map((m) => m[1]).filter((f) => f.includes('<table'))
+  const rowsOf = (figure: string) => figure.split('<tbody>')[1].split('</tr>').filter((r) => r.includes('<tr'))
+
+  it('links a source on every row of the limits table, with the check date in its caption', async () => {
+    const limits = figures(await render()).find((f) => f.includes('Tool and source'))!
+    expect(limits).toContain('checked November 27, 2026')
+    const rows = rowsOf(limits)
     expect(rows.length).toBeGreaterThanOrEqual(10)
     for (const row of rows) expect(row).toMatch(/<a href="https:\/\//)
+  }, 20_000)
+
+  it('reports the test run for each tool, and links the test resume and posting it used', async () => {
+    const html = await render()
+    const results = figures(html).find((f) => f.includes('Real gaps found'))!
+    expect(results).toContain('November 27, 2026')
+    expect(rowsOf(results)).toHaveLength(8)
+    for (const file of ['test-resume.pdf', 'test-resume.txt', 'test-posting.txt']) {
+      const href = `/guides/${slug}/${file}`
+      expect(html).toContain(`href="${href}"`)
+      expect(existsSync(join(__dirname, '../public', href))).toBe(true)
+    }
   }, 20_000)
 
   it('links to the free ATS checker, and the checker links back', async () => {
