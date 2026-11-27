@@ -47,14 +47,14 @@ function flatten(data: unknown): Record<string, unknown>[] {
 // hold the employer's upload. Signed-in LinkedIn has no posting data, and its
 // page shows related jobs' logos too, so only the one named for the company (#346).
 function boardLogo(company: string): string | undefined {
-  if (location.hostname.endsWith('linkedin.com')) {
-    const name = company.toLowerCase()
+  if (onHost('linkedin.com')) {
+    const named = (img: Element) => (img.getAttribute('alt') ?? '').split(',').pop()!.trim().replace(/\.$/, '')
     return Array.from(document.querySelectorAll('img[src*="/company-logo_"]'))
-      .find((img) => name && (img.getAttribute('alt') ?? '').toLowerCase().includes(name))?.getAttribute('src') ?? undefined
+      .find((img) => company && named(img).toLowerCase() === company.toLowerCase())?.getAttribute('src') ?? undefined
   }
   const image = document.querySelector('meta[property="og:image"]')?.getAttribute('content') ?? ''
-  if (location.hostname.endsWith('greenhouse.io') && image.includes('/external_greenhouse_job_boards/logos/')) return image
-  if (location.hostname.endsWith('myworkdayjobs.com') && /\/assets\/logo$/.test(image)) return image
+  if (onHost('greenhouse.io') && image.includes('/external_greenhouse_job_boards/logos/')) return image
+  if (onHost('myworkdayjobs.com') && /\/assets\/logo$/.test(image)) return image
   return undefined
 }
 
@@ -72,6 +72,10 @@ function ownSiteIcon(company: string): string | undefined {
   if (!names.some((n) => site === n || site === n + 'careers' || site === n + 'jobs')) return undefined
   const href = (document.querySelector('link[rel~="apple-touch-icon"]') ?? document.querySelector('link[rel~="icon"]'))?.getAttribute('href')
   return href ?? undefined
+}
+
+function onHost(host: string): boolean {
+  return location.hostname === host || location.hostname.endsWith('.' + host)
 }
 
 function https(url: string | undefined): string | undefined {

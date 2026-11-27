@@ -52,9 +52,10 @@ describe('postingLogo', () => {
 
   test("takes signed-in LinkedIn's logo image named for the company, not a related job's", () => {
     const img = (alt: string, id: string) => `<img alt="${alt}" src="https://media.licdn.com/dms/image/v2/${id}/company-logo_100_100/0/1/logo?e=1797465600">`
-    openPage('https://www.linkedin.com/jobs/search-results/?currentJobId=101', '', img('', 'related') + img('Company logo for, Quarry Labs.', 'quarry') + img('Company logo for, Fernbrook Analytics.', 'fernbrook'))
+    openPage('https://www.linkedin.com/jobs/search-results/?currentJobId=101', '', img('', 'related') + img('Company logo for, Fernbrook Analytics Group.', 'group') + img('Company logo for, Fernbrook Analytics.', 'fernbrook'))
     expect(postingLogo('Fernbrook Analytics')).toBe('https://media.licdn.com/dms/image/v2/fernbrook/company-logo_100_100/0/1/logo?e=1797465600')
     expect(postingLogo('Northwind Labs')).toBeUndefined()
+    expect(postingLogo('Any')).toBeUndefined()
   })
 
   test("uses the site's own icon on the company's own careers site, the larger one first", () => {
