@@ -95,8 +95,14 @@ export interface ResumeData {
   }
   // The layout picked on the resume page. Missing: "Your design" whenever its check passes (#131).
   layout?: 'yours' | 'cover-me'
-  // READER_VERSION when uploaded. An older text can be offered a re-upload (#240).
+  // READER_VERSION when uploaded or read again. With a stored file, an older
+  // text is read again when the popup opens (lib/reread.ts) (#401).
   readerVersion?: number
+  // The uploaded PDF or Word file, in the design file store under id. For
+  // Word, design.hash is the same id (#401).
+  file?: { id: string; size: number; type: 'pdf' | 'docx' }
+  // Set by an upload only: updatedAt also moves on syncs and re-reads (#401).
+  uploadedAt?: string
 }
 
 export type GenerateResponse =

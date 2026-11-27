@@ -278,7 +278,6 @@ export function withSectionOrder<T extends ParsedResume>(parsed: T, resumeText?:
 // store builds still read linksKept, so new parses keep writing it (#238).
 export const PARSE_VERSION = 1
 
-// A model's parse, valid, made ready to store and tailor from.
 function normalizedParse(parsed: ParsedResume, resumeText?: string): ParsedResume {
   return { ...withDetails(withSectionOrder(withLinks(withOtherSections(parsed), resumeText), resumeText)), linksKept: true, parseVersion: PARSE_VERSION }
 }

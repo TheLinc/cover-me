@@ -67,7 +67,7 @@ export async function checkUploadedDesign(hash: string): Promise<void> {
       const session = await ensureValidSession()
       if (!session) throw new Error('Sign in to check your design.')
       if (!ownedBy(resume, session)) throw new Error('Upload your .docx again while signed in to use your design.')
-      parsed = await uploadResumeToBackend(session.access_token, resume.text, resume.filename, true)
+      parsed = await uploadResumeToBackend(session.access_token, resume.text, resume.filename, true, { readerVersion: resume.readerVersion, uploadedAt: resume.uploadedAt })
       if (!parsed) throw new Error("Couldn't check your design right now. Try again in a few minutes.")
     } else {
       if (!settings?.apiKey) throw new Error('Add your API key in Settings to check your design.')
@@ -129,7 +129,7 @@ export async function restoreDesign(accessToken: string, hash: string, text: str
   if (resume?.text !== text || resume.design) return
   // The resume first, as on upload: a file stored before anything points to
   // it could be pruned by a History save in between.
-  await saveResume({ ...resume, design: { hash, size: bytes.length, status: 'done', check, uploaded: true } })
+  await saveResume({ ...resume, file: { id: hash, size: bytes.length, type: 'docx' }, design: { hash, size: bytes.length, status: 'done', check, uploaded: true } })
   await saveDesignFile(hash, file)
 }
 

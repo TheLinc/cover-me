@@ -108,11 +108,11 @@ export async function deleteFromTailoredHistory(id: string): Promise<void> {
   await pruneDesignFiles()
 }
 
-// The user's own Word files (#131), each under the SHA-256 of its bytes, kept
-// for as long as the resume or a History entry uses it, so an older entry
-// still downloads in the design it was tailored in. Base64: storage holds JSON.
-// parsed: the parse the upload check matched against, which places the
-// tailored text later.
+// The user's uploaded PDF and Word files (#131, #401), each under its fileId
+// (lib/resume-file.ts), kept for as long as the resume or a History entry uses
+// it, so an older entry still downloads in the design it was tailored in.
+// Base64: storage holds JSON. parsed: Word only, the parse the upload check
+// matched against, which places the tailored text later.
 export interface DesignFile { data: string; parsed?: ParsedResume }
 
 const designKey = (hash: string) => `designFile:${hash}`
@@ -135,7 +135,7 @@ export async function getDesignHashes(): Promise<string[]> {
 
 async function pruneDesignFiles(): Promise<void> {
   const [stored, resume, history] = await Promise.all([getDesignHashes(), getResume(), getTailoredHistory()])
-  const inUse = new Set([resume?.design?.hash, ...history.map((e) => e.resume.sourceHash)])
+  const inUse = new Set([resume?.design?.hash, resume?.file?.id, ...history.map((e) => e.resume.sourceHash)])
   const unused = stored.filter((h) => !inUse.has(h))
   if (unused.length === 0) return
   await chrome.storage.local.remove(unused.map(designKey))

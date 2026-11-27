@@ -103,7 +103,6 @@ describe('a Word file checked against a parse from before the link fix (#238)', 
     expect(await finishDesign(resume(), d)).toMatchObject({ designFellBack: true })
     expect((local.resume as { design: { check: unknown } }).design.check).toMatchObject({ matched: 0 })
     expect((await designForTailor()).design).toEqual({ layout: 'cover-me', fellBack: false })
-    // Older History entries still download in the user's design.
     expect(local[`designFile:${hash}`]).toMatchObject({ parsed: beforeLinks() })
   })
 })
@@ -165,10 +164,10 @@ describe('the upload check', () => {
 
   test('BYOK: a resume replaced while its parse runs never gets that parse', async () => {
     await store({ status: 'checking', extra: { settings: { provider: 'claude', apiKey: 'x', mode: 'byok' } } })
-    delete (local[`designFile:${hash}`] as { parsed?: unknown }).parsed // a first upload: no parse yet
+    delete (local[`designFile:${hash}`] as { parsed?: unknown }).parsed
     const replaced = { text: 'Someone else', filename: 'other.pdf', updatedAt: '2026-11-02T00:00:00Z' }
     parseMock.mockImplementationOnce(async () => {
-      local.resume = replaced // another file uploaded while the parse runs
+      local.resume = replaced
       return { ...resume(), otherSections: [] }
     })
     await checkUploadedDesign(hash)
@@ -183,8 +182,6 @@ describe('the upload check', () => {
     await checkUploadedDesign(hash)
     expect(parseMock).toHaveBeenCalledTimes(1)
     expect((local.resume as { parsed: unknown }).parsed).toMatchObject({ linksKept: true })
-
-    // A new parse is reused as it is.
     await store({ status: 'checking', extra: { settings: { provider: 'claude', apiKey: 'x', mode: 'byok' }, resume: { parsed: { ...old, linksKept: true } } } })
     delete (local[`designFile:${hash}`] as { parsed?: unknown }).parsed
     parseMock.mockClear()
@@ -217,6 +214,16 @@ describe('the upload check', () => {
     await checkUploadedDesign(hash)
     expect((local.resume as { design: unknown }).design).toMatchObject({ status: 'error', error: 'Upload your .docx again while signed in to use your design.' })
     expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  test("hosted: the check's upload sends the resume's readerVersion and uploadedAt (#401)", async () => {
+    const session = { access_token: 't', refresh_token: 'r', expires_at: Math.floor(Date.now() / 1000) + 3600, user: { id: 'me', email: 'ada@example.com' } }
+    await store({ status: 'checking', extra: { settings: { provider: 'claude', apiKey: '', mode: 'hosted' }, session, resume: { accountId: 'me', readerVersion: 2, uploadedAt: '2026-11-01T00:00:00Z' } } })
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => new Response(JSON.stringify({ success: true, structured: current() }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    await checkUploadedDesign(hash)
+    const post = fetchMock.mock.calls.find(([url, init]) => url.endsWith('/functions/v1/resume') && init?.method === 'POST')
+    expect(JSON.parse(post![1]!.body as string)).toMatchObject({ parse: true, readerVersion: 2, uploadedAt: '2026-11-01T00:00:00Z' })
   })
 })
 

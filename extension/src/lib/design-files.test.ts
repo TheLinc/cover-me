@@ -40,4 +40,13 @@ describe('design file store', () => {
     await saveResume({ text: 'Pat', filename: 'pat.pdf', updatedAt: '2026-11-03T00:00:00Z' })
     expect(await getDesignFile('old')).toBeNull()
   })
+
+  test('a PDF file stays while the resume points to it and goes when replaced (#401)', async () => {
+    fakeLocal()
+    await saveDesignFile('p', { data: 'cGRm' })
+    await saveResume({ text: 'Pat', filename: 'pat.pdf', updatedAt: '2026-11-01T00:00:00Z', file: { id: 'p', size: 3, type: 'pdf' } })
+    expect(await getDesignFile('p')).toEqual({ data: 'cGRm' })
+    await saveResume({ text: 'Pat', filename: 'pat.txt', updatedAt: '2026-11-03T00:00:00Z' })
+    expect(await getDesignFile('p')).toBeNull()
+  })
 })

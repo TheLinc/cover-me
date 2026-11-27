@@ -151,7 +151,7 @@ export async function completeSignIn(sess: AuthSession): Promise<void> {
 //   upload failed.
 // The comparison uses this device's clock against the server's; a badly wrong
 // clock can pick the older copy (#16).
-async function syncResume(sess: AuthSession): Promise<void> {
+export async function syncResume(sess: AuthSession): Promise<void> {
   const userId = sess.user.id
   const before = await getResume()
   // Removed before the fetch, so a failed fetch can't leave it showing as this account's (#16).
@@ -171,7 +171,8 @@ async function syncResume(sess: AuthSession): Promise<void> {
   if (keepMine) {
     // Matching the account's copy, a signed-out copy is in the account after all (#16).
     const { signedOutUpload, ...rest } = mine
-    next = { ...rest, accountId: userId, ...(signedOutUpload && remote?.text !== mine.text ? { signedOutUpload } : {}) }
+    const readerVersion = remote?.text === mine.text ? Math.max(mine.readerVersion ?? 0, remote.readerVersion ?? 0) || undefined : mine.readerVersion
+    next = { ...rest, accountId: userId, ...(readerVersion ? { readerVersion } : {}), ...(signedOutUpload && remote?.text !== mine.text ? { signedOutUpload } : {}) }
   }
 
   // Don't overwrite a resume the user added while this ran (#16).
@@ -181,7 +182,9 @@ async function syncResume(sess: AuthSession): Promise<void> {
   // by the next account to sign in here, and this account retries next time (#16).
   if (next) await saveResume(next)
   else if (local) await clearResume()
-  if (keepMine && !signedOut && remote?.text !== mine.text) await uploadResumeToBackend(sess.access_token, mine.text, mine.filename)
+  if (keepMine && !signedOut && remote?.text !== mine.text) {
+    await uploadResumeToBackend(sess.access_token, mine.text, mine.filename, false, { readerVersion: mine.readerVersion, uploadedAt: mine.uploadedAt })
+  }
   // Pro: the Word file that goes with the account's resume comes down too
   // (#174), unless this computer has its own design for it. A static import:
   // Chrome refuses import() in the service worker, where a Google sign-in runs.
@@ -201,7 +204,12 @@ async function fetchResumeFromBackend(accessToken: string): Promise<(ResumeData 
   if (!res.ok) throw new Error((data.error as string) || 'Resume sync failed')
   if (typeof data.text !== 'string' || !data.text) return null
   const designHash = typeof data.design_hash === 'string' ? data.design_hash : undefined
-  return { text: data.text, filename: (data.filename as string) || 'resume', updatedAt: (data.updated_at as string) || new Date(0).toISOString(), ...(designHash ? { designHash } : {}) }
+  return {
+    text: data.text, filename: (data.filename as string) || 'resume', updatedAt: (data.updated_at as string) || new Date(0).toISOString(),
+    ...(designHash ? { designHash } : {}),
+    ...(typeof data.reader_version === 'number' ? { readerVersion: data.reader_version } : {}),
+    ...(typeof data.uploaded_at === 'string' ? { uploadedAt: data.uploaded_at } : {}),
+  }
 }
 
 export type GoogleSignInResponse =
@@ -407,12 +415,15 @@ export async function answerViaBackend(
 
 // parse: wait for the server's parse of this text and return it, for the
 // check of an uploaded Word file (#131). Missing when the server didn't parse
-// (an older function, or the account's parse limit).
+// (an older function, or the account's parse limit). reread: the stored file
+// read again, from the text with this hash; it throws ResumeChangedError when
+// the account's text has changed since (#401).
 export async function uploadResumeToBackend(
   accessToken: string,
   text: string,
   filename: string,
   parse = false,
+  extra: { readerVersion?: number; uploadedAt?: string; reread?: { baseTextHash: string } } = {},
 ): Promise<ParsedResume | undefined> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/resume`, {
     method: 'POST',
@@ -421,9 +432,15 @@ export async function uploadResumeToBackend(
       'Content-Type': 'application/json',
       ...RESUME_FIELDS,
     },
-    body: JSON.stringify({ text, filename, ...(parse ? { parse: true } : {}) }),
+    body: JSON.stringify({
+      text, filename, ...(parse ? { parse: true } : {}),
+      ...(extra.readerVersion ? { readerVersion: extra.readerVersion } : {}),
+      ...(extra.uploadedAt ? { uploadedAt: extra.uploadedAt } : {}),
+      ...(extra.reread ? { reread: true, baseTextHash: extra.reread.baseTextHash } : {}),
+    }),
   })
   const data = await res.json().catch(() => ({})) as Record<string, unknown>
+  if (res.status === 409 && extra.reread) throw new ResumeChangedError((data.error as string) ?? 'Resume changed')
   // A parse answer is sent as it's ready (heartbeatJson), so a late failure comes with status 200 (#131).
   if (!res.ok || data.error) throw new Error((data.error as string) ?? 'Resume sync failed')
   const structured = data.structured as ParsedResume | undefined
@@ -450,6 +467,8 @@ export async function uploadDesignFileToBackend(accessToken: string, hash: strin
 // The account refused the Word file for good: its resume text isn't the text
 // the file was checked against. Sending it again gets the same answer (#174).
 export class DesignRefusedError extends Error {}
+
+export class ResumeChangedError extends Error {}
 
 // Pro: one of the account's Word files, with the parse that places tailored
 // text in it (#174). null when it's gone or the plan has ended (404, 403).
