@@ -16,8 +16,11 @@ mkdirSync(outDir, { recursive: true })
 const DESC = 'Fernbrook Analytics is hiring a Platform Engineer to build the data platform behind our forecasting product. You will own ingestion pipelines, a Postgres warehouse and the internal tooling our analysts use every day. We work in TypeScript and Go, deploy on Kubernetes, and value clear writing. 4+ years building backend systems required.'
 const JOB_URL = 'https://job-boards.greenhouse.io/fernbrookanalytics/jobs/4821'
 const OTHER_URL = 'https://job-boards.greenhouse.io/fernbrookanalytics/blog'
-const jobHtml = `<!doctype html><html><head><title>Platform Engineer - Fernbrook Analytics</title>
-<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', '@type': 'JobPosting', title: 'Platform Engineer', hiringOrganization: { '@type': 'Organization', name: 'Fernbrook Analytics' }, description: DESC })}</script>
+const BROKEN_LOGO_URL = 'https://job-boards.greenhouse.io/fernbrookanalytics/jobs/4822'
+const LOGO = 'https://job-boards.greenhouse.io/fernbrookanalytics/logo.svg'
+const logoSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="#0f766e"/><path d="M18 46V18h28v8H27v5h15v8H27v7z" fill="#fff"/></svg>'
+const jobPage = (logo) => `<!doctype html><html><head><title>Platform Engineer - Fernbrook Analytics</title>
+<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', '@type': 'JobPosting', title: 'Platform Engineer', hiringOrganization: { '@type': 'Organization', name: 'Fernbrook Analytics', logo }, description: DESC })}</script>
 </head><body><h1>Platform Engineer</h1><p>Fernbrook Analytics</p><div class="description"><p>${DESC}</p></div></body></html>`
 const otherHtml = '<!doctype html><html><head><title>Our year at Fernbrook</title></head><body><h1>Our year at Fernbrook</h1><p>We shipped three releases and moved offices.</p></body></html>'
 
@@ -26,8 +29,12 @@ const ctx = await chromium.launchPersistentContext(mkdtempSync(join(tmpdir(), 'c
   channel: 'chromium', headless: false, viewport: { width: 420, height: 640 },
   args: [`--disable-extensions-except=${dist}`, `--load-extension=${dist}`],
 })
-await ctx.route('https://job-boards.greenhouse.io/fernbrookanalytics/**', (r) =>
-  r.fulfill({ contentType: 'text/html', body: r.request().url() === JOB_URL ? jobHtml : otherHtml }))
+await ctx.route('https://job-boards.greenhouse.io/fernbrookanalytics/**', (r) => {
+  const url = r.request().url()
+  if (url === LOGO) return r.fulfill({ contentType: 'image/svg+xml', body: logoSvg })
+  if (url.endsWith('/missing.png')) return r.fulfill({ status: 404, body: '' })
+  r.fulfill({ contentType: 'text/html', body: url === JOB_URL ? jobPage(LOGO) : url === BROKEN_LOGO_URL ? jobPage(LOGO.replace('logo.svg', 'missing.png')) : otherHtml })
+})
 const sw = ctx.serviceWorkers()[0] ?? await ctx.waitForEvent('serviceworker')
 await sw.evaluate(() => {
   self.__fetches = []
@@ -70,6 +77,7 @@ await popup.waitForTimeout(1500)
 await shot(popup, '1-job-page')
 assert.equal(await popup.getByText('Fernbrook Analytics · job-boards.greenhouse.io').isVisible(), after)
 assert.equal(await popup.getByText('Open a job posting on LinkedIn, Indeed, or any careers page').isVisible(), !after)
+if (after) assert.ok(await popup.locator('img.posting-logo').evaluate((img) => img.complete && img.naturalWidth > 0), 'the posting data logo shows')
 assert.deepEqual(await fetches(), [], 'opening the popup sends nothing to the server')
 console.log(mode, '1 job page: buttons', await buttons(popup))
 await popup.close()
@@ -112,6 +120,12 @@ if (after) {
   assert.equal(reading.height, found.height, 'the placeholder holds the card height')
   await popup.getByRole('button', { name: 'Wrong job? Paste it' }).click()
   assert.ok(await popup.getByPlaceholder('Paste the full job description here…').isVisible())
+  await popup.close()
+  popup = await openOn(BROKEN_LOGO_URL)
+  await popup.getByText('Platform Engineer', { exact: true }).waitFor()
+  await popup.locator('span.posting-logo', { hasText: 'F' }).waitFor()
+  await shot(popup, '5-logo-fails')
+  console.log(mode, '5 a logo that fails to load falls back to the letter')
   console.log(mode, '4 placeholder height', reading.height, '= card', found.height, '; Wrong job? opens the paste form')
 }
 
