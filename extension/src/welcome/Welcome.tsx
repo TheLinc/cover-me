@@ -160,7 +160,7 @@ function Grow({ className, children }: { className: string; children: ReactNode 
       const next = content.offsetHeight + frame
       // A row that animates its own height already moves the card smoothly (#342).
       const selfAnimating = content.getAnimations({ subtree: true }).some((a) => a instanceof CSSTransition && a.transitionProperty === 'grid-template-rows')
-      if (next !== last && !selfAnimating && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      if (next !== last && last > frame && !selfAnimating && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
         const from = running?.playState === 'running' ? box.getBoundingClientRect().height : last
         running?.cancel()
         running = box.animate([{ height: `${from}px`, overflow: 'clip' }, { height: `${next}px`, overflow: 'clip' }], { duration: 200, easing: 'ease' })

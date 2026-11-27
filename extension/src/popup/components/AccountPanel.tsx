@@ -19,6 +19,7 @@ const MASKED = '••••••••••••••••'
 // stays on the first letter (#25).
 export default function AccountPanel({ initialView = 'signin', links = true }: { initialView?: AuthView; links?: boolean }) {
   const [mode, setMode] = useState<AppMode>('hosted')
+  const [loaded, setLoaded] = useState(false)
 
   const [provider, setProvider] = useState<AIProvider>('claude')
   const [apiKey, setApiKey] = useState('')
@@ -53,6 +54,7 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
         if (s.apiKey) setApiKey(MASKED)
       }
       if (sess) signedIn(sess)
+      setLoaded(true)
     })
     // A Google sign-in started from the popup fails after the popup closed (#16).
     takeGoogleSignInError().then((msg) => { if (msg && !shownToken.current) setAuthError(msg) })
@@ -202,6 +204,9 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
 
   const emailInitial = session?.user.email?.[0]?.toUpperCase() ?? '?'
   const isPro = tier === 'hosted_pro'
+
+  // Until the first read, a signed-in user would see the sign-in form for a frame (#342).
+  if (!loaded) return null
 
   return (
     <>
