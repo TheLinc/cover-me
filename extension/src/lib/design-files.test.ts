@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { addToTailoredHistory, deleteFromTailoredHistory, getDesignFile, saveDesignFile, saveResume } from './storage'
+import { addToHistory, addToTailoredHistory, deleteFromHistory, deleteFromTailoredHistory, getDesignFile, saveDesignFile, saveResume } from './storage'
 
 function fakeLocal(data: Record<string, unknown> = {}) {
   const pick = (k: string | string[]) => Object.fromEntries((Array.isArray(k) ? k : [k]).filter((x) => x in data).map((x) => [x, data[x]]))
@@ -39,6 +39,27 @@ describe('design file store', () => {
     await saveResume(upload('old'))
     await saveResume({ text: 'Pat', filename: 'pat.pdf', updatedAt: '2026-11-03T00:00:00Z' })
     expect(await getDesignFile('old')).toBeNull()
+  })
+
+  test('a file stays while a letter made from it is in History, and goes with the letter (#401)', async () => {
+    fakeLocal()
+    await saveDesignFile('p', { data: 'cGRm' })
+    await saveResume({ text: 'Pat', filename: 'pat.pdf', updatedAt: '2026-11-01T00:00:00Z', file: { id: 'p', size: 3, type: 'pdf' } })
+    await addToHistory({ id: 'l', job, letter: 'Dear team', createdAt: '2026-11-02T00:00:00Z', source: { filename: 'pat.pdf', uploadedAt: '2026-11-01T00:00:00Z', fileId: 'p' } })
+    await saveResume({ text: 'Pat 2', filename: 'pat2.txt', updatedAt: '2026-11-03T00:00:00Z' })
+    expect(await getDesignFile('p')).toEqual({ data: 'cGRm' })
+    await deleteFromHistory('l')
+    expect(await getDesignFile('p')).toBeNull()
+  })
+
+  test("a file stays while a tailored resume's source points to it (#401)", async () => {
+    fakeLocal()
+    await saveDesignFile('p', { data: 'cGRm' })
+    await addToTailoredHistory({ id: 't', job, resume: { ...resume(), source: { filename: 'pat.pdf', uploadedAt: 'x', fileId: 'p' } }, createdAt: '2026-11-02T00:00:00Z' })
+    await saveResume({ text: 'Pat 2', filename: 'pat2.txt', updatedAt: '2026-11-03T00:00:00Z' })
+    expect(await getDesignFile('p')).toEqual({ data: 'cGRm' })
+    await deleteFromTailoredHistory('t')
+    expect(await getDesignFile('p')).toBeNull()
   })
 
   test('a PDF file stays while the resume points to it and goes when replaced (#401)', async () => {

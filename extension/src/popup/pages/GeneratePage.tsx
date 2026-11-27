@@ -7,6 +7,7 @@ import { letterSteps, tailorSteps } from '../../lib/progress-steps'
 import { openResumeEditor, postingTitleInSummary, saveResumeEdit } from '../../lib/resume-edit'
 import { saveResumeLook, type ResumeLook } from '../../lib/resume-template'
 import { downloadResumeWord, usesDesign } from '../../lib/design'
+import { usingLine } from '../../lib/resume-file'
 import { getCandidateContext, getTailoredHistory, resolveMode, saveCandidateContext } from '../../lib/storage'
 import DownloadMenu from '../components/DownloadMenu'
 import GapChips from '../components/GapChips'
@@ -840,6 +841,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                     initialContext={initialContext}
                     setInitialContext={setInitialContext}
                   />
+                  {resumeData && <button type="button" className="upload-link using-line" title="Open the Resume tab" onClick={() => onNavigate('resume')}>{usingLine(resumeData)}</button>}
                   <button className="btn btn-primary" onClick={generate}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
@@ -912,6 +914,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                     initialContext={initialContext}
                     setInitialContext={setInitialContext}
                   />
+                  {resumeData && <button type="button" className="upload-link using-line" title="Open the Resume tab" onClick={() => onNavigate('resume')}>{usingLine(resumeData)}</button>}
                   <button className="btn btn-primary manual-submit" onClick={generateManual} disabled={!manualReady}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />

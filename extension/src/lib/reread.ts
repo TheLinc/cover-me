@@ -1,14 +1,9 @@
 import { ensureValidSession, syncResume } from './auth'
 import { fromBase64, sha256Hex, toBase64 } from './design'
-import { fileId, fileType } from './resume-file'
+import { fileId, fileType, storedFile } from './resume-file'
 import { parseResume, READER_VERSION } from './resume-parser'
 import { getDesignFile, getMode, getResume, saveDesignFile, saveResume } from './storage'
 import type { ResumeData } from '../types'
-
-// A Word upload from before #401 kept its bytes under design.hash with no file.
-function storedFile(resume: ResumeData): ResumeData['file'] {
-  return resume.file ?? (resume.design ? { id: resume.design.hash, size: resume.design.size, type: 'docx' } : undefined)
-}
 
 const isOld = (resume: ResumeData) => (resume.readerVersion ?? 1) < READER_VERSION
 

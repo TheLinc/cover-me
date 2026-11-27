@@ -489,7 +489,7 @@ Deno.serve(async (req) => {
 
   const { data: resumeRow, error: resumeError } = await supabase
     .from('resumes')
-    .select('text_encrypted, structured_encrypted')
+    .select('text_encrypted, structured_encrypted, filename, uploaded_at, updated_at')
     .eq('user_id', userId)
     .single()
 
@@ -520,9 +520,9 @@ Deno.serve(async (req) => {
     includeSummary = body.includeSummary !== false
     previous = isObject(body.previous) ? body.previous : undefined
     if (previous && JSON.stringify(previous).length > MAX_RESUME_JSON) return json({ error: 'Invalid request body' }, 400)
-    // Not resume content for the model to revise (#131, #119).
+    // Not resume content for the model to revise (#131, #119, #401).
     if (previous) {
-      const { sourceHash: _h, designFellBack: _f, template: _t, accent: _a, ...rest } = previous
+      const { sourceHash: _h, designFellBack: _f, source: _s, template: _t, accent: _a, ...rest } = previous
       previous = rest
     }
     localId = isUuid(body.localId) ? body.localId : undefined
@@ -750,7 +750,8 @@ ${job.description}`)
         const row = {
           user_id: userId,
           job_application_id: jobAppId,
-          resume_json_encrypted: await encrypt(JSON.stringify(resume)),
+          // On the saved copy only: the extension stamps its own, with the file id only it knows (#401).
+          resume_json_encrypted: await encrypt(JSON.stringify({ ...resume, source: { filename: resumeRow.filename ?? 'resume', uploadedAt: resumeRow.uploaded_at ?? resumeRow.updated_at } })),
           ats_score: atsScore ?? null,
           ats_gaps: atsGaps ?? null,
           source_hash: sourceHash ?? null,

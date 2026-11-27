@@ -4,7 +4,7 @@ import { DESIGN_CHECK_STALE_MS, DESIGN_UPLOAD_MAX, usesDesign } from '../../lib/
 import { designUsable } from '../../lib/pdf/docx-design'
 import { MAX_RESUME_CHARS } from '../../lib/ai/resume-parse'
 import { needsUploadNote } from '../../lib/reread'
-import { saveUpload } from '../../lib/resume-file'
+import { downloadStoredFile, saveUpload, storedFile } from '../../lib/resume-file'
 import { parseResume } from '../../lib/resume-parser'
 import { getCachedTier, getMode, getResume, getSession, saveResume, watchResume } from '../../lib/storage'
 import type { DesignCheck, ParsedResume, ResumeData } from '../../types'
@@ -118,6 +118,7 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
 
   const wordUpload = !!resume?.filename.toLowerCase().endsWith('.docx')
   const readerNote = needsUploadNote(resume, noteSeen)
+  const kept = resume ? storedFile(resume) : undefined
 
   return (
     <div className="page">
@@ -213,7 +214,14 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
               </svg>
             </div>
             <div className="resume-info">
-              <div className="resume-name">{resume.filename}</div>
+              <div className="resume-name-row">
+                <div className="resume-name">{resume.filename}</div>
+                {kept && (
+                  <button type="button" className="btn btn-secondary btn-sm resume-download" aria-label={`Download ${resume.filename}`} onClick={() => void downloadStoredFile(kept.id, resume.filename)}>
+                    Download
+                  </button>
+                )}
+              </div>
               <div className="resume-meta">
                 Updated {formatAge(resume.updatedAt)} · ~{Math.round(resume.text.length / 5)} words
               </div>

@@ -364,6 +364,18 @@ describe('tailor', () => {
     expect(data?.[0].job_application_id).toBeTruthy()
   })
 
+  it("a Pro tailor keeps the source resume's name and upload date with its copy, not in the answer (#401)", async () => {
+    user = await createUser('hosted_pro')
+    const res0 = await callFunction('resume', { token: user.token, body: { text: LONG_RESUME_TEXT, filename: 'Pat Resume.pdf', uploadedAt: '2026-11-20T15:00:00.000Z' } })
+    expect(res0.status).toBe(200)
+    const { resume } = await (await callFunction('tailor', { token: user.token, body: { job: JOB } })).json()
+    expect(resume).not.toHaveProperty('source')
+    const { applications } = await (await callFunction('applications', { token: user.token })).json()
+    const saved = applications[0].tailoredResumes[0].resume
+    expect(saved.source.filename).toBe('Pat Resume.pdf')
+    expect(Date.parse(saved.source.uploadedAt)).toBe(Date.parse('2026-11-20T15:00:00.000Z'))
+  })
+
   it("tailored in the user's Word file: the hash goes on the result and the Pro copy, and the run is counted", async () => {
     user = await createUser('hosted_pro')
     await uploadResume(user)
