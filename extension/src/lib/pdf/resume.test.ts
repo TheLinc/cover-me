@@ -150,6 +150,29 @@ describe('every template lays out a long and a short resume cleanly', () => {
 })
 
 describe('page breaks and long lines (#119)', () => {
+  const MARGIN: Record<ResumeTemplate, number> = { classic: 54, modern: 54, compact: 40, minimal: 64 }
+
+  test('no line runs past the side margins in any template', async () => {
+    for (const template of RESUME_TEMPLATES) {
+      for (const resume of [LONG, SHORT]) {
+        for (const l of (await read(withTemplate(resume, template))).lines) {
+          expect(l.x, `${template}: ${l.text}`).toBeGreaterThanOrEqual(MARGIN[template] - 0.5)
+          expect(l.x + l.width, `${template}: ${l.text}`).toBeLessThanOrEqual(612 - MARGIN[template] + 0.5)
+        }
+      }
+    }
+  })
+
+  test('a skills section is never split across two pages', async () => {
+    for (const template of RESUME_TEMPLATES) {
+      for (let n = 20; n <= 44; n++) {
+        const { lines } = await read(withTemplate({ ...SHORT, experience: [{ ...SHORT.experience[0], bullets: Array.from({ length: n }, (_, i) => `Shipped feature ${i + 1}.`) }], skills: 'Languages: Go, Rust\nTools: Docker, Git\nPractices: Code review' }, template))
+        const pages = lines.filter((l) => /^(SKILLS|Languages:|Tools:|Practices:)/.test(l.text)).map((l) => l.page)
+        expect(new Set(pages).size, `${template}, ${n} bullets`).toBe(1)
+      }
+    }
+  })
+
   test('a name too wide for the line shrinks to fit inside the margins', async () => {
     const { lines } = await read(withTemplate(LONG, 'minimal'))
     const name = lines.find((l) => l.text === LONG.name)!

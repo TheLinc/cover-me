@@ -135,6 +135,14 @@ describe('buildResumeDocx', () => {
       expect(doc).toMatch(/<w:keepLines\/><w:numPr>.*?<\/w:numPr><w:spacing w:after="0" w:before="20" w:line="240" w:lineRule="exact"\/><\/w:pPr><w:r><w:t xml:space="preserve">Led a team of 4</)
     })
 
+    it('puts a long link on its own line and keeps a title short of its dates, as the PDF does', async () => {
+      const link = 'github.com/jmontgomery/tidewatch-observability-toolkit-for-coastal-sensors'
+      const { doc } = await xml({ ...resume, projects: [{ name: 'tidewatch', link, bullets: ['Tide sensor dashboard'] }] })
+      expect(doc).toContain(`>${link}</w:t>`)
+      expect(doc).not.toMatch(new RegExp(`<w:tab/><w:t[^>]*>${link}`))
+      expect(doc).toMatch(/<w:ind [^>]*w:right="[1-9]\d*"/)
+    })
+
     it("sets Minimal's larger name in regular weight", async () => {
       const { title } = await xml({ ...resume, template: 'minimal' })
       expect(title).toContain('<w:sz w:val="68"/>')

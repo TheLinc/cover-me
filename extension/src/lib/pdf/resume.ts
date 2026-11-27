@@ -3,6 +3,7 @@
 import { jsPDF } from 'jspdf'
 import { contactParts } from './contact'
 import { resumeFileName } from './file-name'
+import { CODES, WIDTHS } from './font-widths'
 import { GPA_LINE, SKILL_GROUP } from './layout-rules'
 import { orderedSections, type StandardSection } from './sections'
 import type { ResumeSection, ResumeTemplate, TailoredResume } from './types'
@@ -10,6 +11,33 @@ import type { ResumeSection, ResumeTemplate, TailoredResume } from './types'
 // Letter page: 612 × 792 pt (https://github.com/TheLinc/cover-me/commit/a074665df759617a5ebedfaf28370e973177338c)
 const PW = 612
 const PH = 792
+
+const CODE_POINTS = CODES.split(',').flatMap((range) => {
+  const [from, to = from] = range.split('-').map(Number)
+  return Array.from({ length: to - from + 1 }, (_, i) => from + i)
+})
+
+type FontWidths = Record<number | 'fof', number>
+
+// Gives jsPDF the fonts' exact widths before it measures anything (font-widths.ts), so wrapped
+// lines and right-aligned text end at the margin. It also drops kerning from the measure: jsPDF
+// subtracts it ("To", "AW") but never prints it in these fonts (#119).
+function exactWidths(doc: jsPDF): jsPDF {
+  const { fontName, fontStyle } = doc.getFont()
+  for (const family of ['helvetica', 'times'] as const) {
+    for (const style of ['normal', 'bold', 'italic'] as const) {
+      doc.setFont(family, style)
+      const { Unicode } = (doc.internal as unknown as { getFont(): { metadata: { Unicode: { widths: FontWidths; kerning: Record<string, unknown> } } } }).getFont().metadata
+      if (Unicode.widths.fof === 1000) continue
+      const exact = WIDTHS[family][style].split(',')
+      CODE_POINTS.forEach((code, i) => { Unicode.widths[code] = Number(exact[i]) })
+      Unicode.widths.fof = 1000
+      for (const pair of Object.keys(Unicode.kerning)) delete Unicode.kerning[pair]
+    }
+  }
+  doc.setFont(fontName, fontStyle)
+  return doc
+}
 
 export type RGB = [number, number, number]
 
@@ -98,7 +126,7 @@ export function resumeStyle(resume: Pick<TailoredResume, 'template' | 'accent'>)
 
 // A name too wide for the line shrinks to fit it rather than running into the margin; the Word copy
 // sets it at the same size (#119).
-export function nameSize(resume: TailoredResume, doc = new jsPDF({ unit: 'pt' })): number {
+export function nameSize(resume: TailoredResume, doc = exactWidths(new jsPDF({ unit: 'pt' }))): number {
   const st = resumeStyle(resume)
   doc.setFont(st.font, st.name.bold ? 'bold' : 'normal')
   doc.setFontSize(st.name.size)
@@ -108,9 +136,9 @@ export function nameSize(resume: TailoredResume, doc = new jsPDF({ unit: 'pt' })
 
 // Wrapped between items, never inside a URL, once links and a location make the line wider
 // than the page; the Word copy breaks at the same places (#149, #119). Lines fill 98% of it:
-// Word sets Arial a touch wider than jsPDF measures Helvetica, and a full line broke inside a
-// URL there (#119). One URL wider than the page still overflows; no real one is (#149).
-export function contactLines(resume: TailoredResume, doc = new jsPDF({ unit: 'pt' })): string[] {
+// Word's own wrapping needs a little room, and a line filled to the margin broke inside a URL
+// there (#119). One URL wider than the page still overflows; no real one is (#149).
+export function contactLines(resume: TailoredResume, doc = exactWidths(new jsPDF({ unit: 'pt' }))): string[] {
   const st = resumeStyle(resume)
   doc.setFont(st.font, 'normal')
   doc.setFontSize(st.contact.size)
@@ -121,6 +149,25 @@ export function contactLines(resume: TailoredResume, doc = new jsPDF({ unit: 'pt
     else lines.push(part)
   }
   return lines
+}
+
+// A note wider than half the line (a long link) goes on its own line under the entry's title
+// (#190); the Word copy asks the same question (#119).
+export function fitsBeside(resume: TailoredResume, note: string, doc = exactWidths(new jsPDF({ unit: 'pt' }))): boolean {
+  const st = resumeStyle(resume)
+  doc.setFont(st.font, 'normal')
+  doc.setFontSize(st.entry)
+  return doc.getTextWidth(pdfSafe(note)) <= (PW - 2 * st.margin) / 2
+}
+
+// The room a right-hand note (dates, a location) keeps beside an entry's title, which wraps
+// short of it. The Word copy keeps the same room with a right indent (#119).
+export function noteRoom(resume: TailoredResume, note: string, doc = exactWidths(new jsPDF({ unit: 'pt' }))): number {
+  if (!note) return 0
+  const st = resumeStyle(resume)
+  doc.setFont(st.font, 'normal')
+  doc.setFontSize(st.entry)
+  return Math.min(doc.getTextWidth(pdfSafe(note)) + 10, (PW - 2 * st.margin) / 2)
 }
 
 export function downloadTailoredResumePdf(resume: TailoredResume, jobTitle?: string): void {
@@ -175,7 +222,7 @@ export function pdfSafe(text: unknown): string {
 // The resume as a jsPDF document: saved by the download, shown as a blob URL
 // by the extension's editor preview, so the two are the same file (#118).
 export function tailoredResumePdf(resume: TailoredResume): jsPDF {
-  const doc = new jsPDF({ unit: 'pt', format: 'letter' })
+  const doc = exactWidths(new jsPDF({ unit: 'pt', format: 'letter' }))
   const st = resumeStyle(resume)
   const { font, heading } = st
   const ML = st.margin
@@ -235,10 +282,10 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
   }
 
   // A left side too wide for the line wraps under itself (#190).
-  function twoCol(left: string, right: string, leftStyle: 'bold' | 'italic', size = ENTRY) {
-    doc.setFont(font, 'normal')
-    doc.setFontSize(size)
-    const rightW = right ? Math.min(width(right) + 10, CW / 2) : 0
+  // The note sits beside the title's last line, so the text reads title then dates (#119).
+  function twoCol(left: string, right: string, leftStyle: 'bold' | 'italic') {
+    const rightW = noteRoom(resume, right, doc)
+    doc.setFontSize(ENTRY)
     doc.setFont(font, leftStyle)
     const lines = wrap(left || '', CW - rightW)
     need(14 + LH * (lines.length - 1))
@@ -248,7 +295,7 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
     })
     if (right) {
       doc.setFont(font, 'normal')
-      doc.text(pdfSafe(right), MR, y - (lines.length - 1) * LH, { align: 'right' })
+      doc.text(pdfSafe(right), MR, y, { align: 'right' })
     }
     y += st.entryStep
   }
@@ -257,9 +304,7 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
   // project's stack, an award's issuer) in italics under it, like a job's company
   // line. A note wider than half the line (a long link) goes on its own line (#190).
   function entryHeader(name: string, subtitle: string | undefined, right: string | undefined) {
-    doc.setFontSize(ENTRY)
-    doc.setFont(font, 'normal')
-    const inline = !!right && width(right) <= CW / 2
+    const inline = !!right && fitsBeside(resume, right, doc)
     twoCol(name, inline ? right! : '', 'bold')
     if (subtitle) twoCol(subtitle, '', 'italic')
     if (right && !inline) {
@@ -315,34 +360,40 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
 
   // Skills: one line per labelled group ("Languages: Python, SQL") with the
   // label in bold, or a plain comma list (#190).
-  function skills(s: string) {
-    const groups = s.split(/\n+/).map((l) => l.trim()).filter(Boolean)
-    for (const group of groups) {
+  function skillGroups(s: string) {
+    return s.split(/\n+/).map((l) => l.trim()).filter(Boolean).map((group) => {
       const m = SKILL_GROUP.exec(group)
       doc.setFontSize(BODY)
-      if (!m) {
-        paragraph(group)
-        continue
-      }
+      doc.setFont(font, 'normal')
+      if (!m) return { label: '', labelW: 0, lines: wrap(group, CW), gap: 0 }
       const label = `${m[1].trim()}:`
       doc.setFont(font, 'bold')
-      // jsPDF drops a trailing space from the measured width, so the gap is added by hand (#190).
-      const labelW = width(label) + BODY * 0.5
+      // jsPDF drops a trailing space from the measured width, so the space is measured on its own (#190, #119).
+      const labelW = width(label) + width(' ')
       doc.setFont(font, 'normal')
       const firstLine = wrap(m[2], CW - labelW)[0] ?? ''
       const rest = pdfSafe(m[2]).slice(firstLine.length).trim()
-      const restLines = rest ? wrap(rest, CW) : []
-      need(LH * (1 + restLines.length))
-      doc.setFont(font, 'bold')
-      text(label, ML)
-      doc.setFont(font, 'normal')
-      doc.text(firstLine, ML + labelW, y)
-      y += LH
-      for (const line of restLines) {
-        doc.text(line, ML, y)
+      return { label, labelW, lines: [firstLine, ...(rest ? wrap(rest, CW) : [])], gap: 1 }
+    })
+  }
+
+  // The section is a few lines, so it moves to the next page whole rather than leaving its last line there alone (#119).
+  const skillsHeight = (groups: ReturnType<typeof skillGroups>) => groups.reduce((h, g) => h + g.lines.length * LH + g.gap, 0)
+
+  function skills(groups: ReturnType<typeof skillGroups>) {
+    for (const { label, labelW, lines, gap } of groups) {
+      need(lines.length * LH)
+      doc.setFontSize(BODY)
+      lines.forEach((line, i) => {
+        if (i === 0 && label) {
+          doc.setFont(font, 'bold')
+          text(label, ML)
+        }
+        doc.setFont(font, 'normal')
+        doc.text(line, ML + (i === 0 ? labelW : 0), y)
         y += LH
-      }
-      y += 1
+      })
+      y += gap
     }
   }
 
@@ -408,8 +459,9 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
     },
     skills: () => {
       if (resume.skills) {
-        sectionHeading('SKILLS', LH)
-        skills(resume.skills)
+        const groups = skillGroups(resume.skills)
+        sectionHeading('SKILLS', skillsHeight(groups))
+        skills(groups)
       }
     },
   }

@@ -11,7 +11,7 @@ import {
 } from 'docx'
 import { resumeFileName, saveFile } from './file-name'
 import { GPA_LINE, SKILL_GROUP } from './layout-rules'
-import { contactLines, nameSize, resumeStyle, type RGB } from './resume'
+import { contactLines, fitsBeside, nameSize, noteRoom, resumeStyle, type RGB } from './resume'
 import { orderedSections, type StandardSection } from './sections'
 import type { TailoredResume } from './types'
 
@@ -55,9 +55,12 @@ export function buildResumeDocx(resume: TailoredResume): Promise<Blob> {
     return { before: Math.round(Math.max(0, before) * PT), after: 0, line: Math.round(L * PT), lineRule: LineRuleType.EXACT }
   }
 
-  // "Senior Engineer ⇥ 2020 – Present": left text, right text on the right margin (#120).
+  // "Senior Engineer ⇥ 2020 – Present": left text, right text on the right margin (#120). The
+  // right indent wraps a long title short of the dates, as the PDF does; Word still sets a right
+  // tab beyond the indent (#119).
   const twoCol = (left: string, right: string, style: 'bold' | 'italic', then: number, keepNext?: boolean) => new Paragraph({
     tabStops: [{ type: TabStopType.RIGHT, position: content }],
+    indent: { right: Math.round(noteRoom(resume, right) * PT) },
     spacing: place(st.entryStep, then, st.entry),
     keepNext,
     children: [
@@ -108,10 +111,14 @@ export function buildResumeDocx(resume: TailoredResume): Promise<Blob> {
   const body: Paragraph[] = []
 
   // Name and link or dates, then the subtitle in italics under it, as in the PDF (#190).
-  const entryHeader = (name: string, subtitle: string | undefined, right: string | undefined, keepNext: boolean) => [
-    twoCol(name, right ?? '', 'bold', st.entryStep, keepNext || !!subtitle),
-    ...(subtitle ? [twoCol(subtitle, '', 'italic', st.entryStep, keepNext)] : []),
-  ]
+  const entryHeader = (name: string, subtitle: string | undefined, right: string | undefined, keepNext: boolean) => {
+    const beside = !right || fitsBeside(resume, right)
+    return [
+      twoCol(name, beside ? right ?? '' : '', 'bold', st.entryStep, keepNext || !!subtitle || !beside),
+      ...(subtitle ? [twoCol(subtitle, '', 'italic', st.entryStep, keepNext || !beside)] : []),
+      ...(beside ? [] : [new Paragraph({ keepNext, keepLines: true, spacing: place(LH, LH + 1), children: [new TextRun(right!)] })]),
+    ]
+  }
 
   // Each section, in the order the user set (sections.ts) (#118).
   const add: Record<StandardSection, () => void> = {
@@ -158,14 +165,17 @@ export function buildResumeDocx(resume: TailoredResume): Promise<Blob> {
     skills: () => {
       if (!resume.skills) return
       body.push(heading('SKILLS'))
-      for (const group of resume.skills.split(/\n+/).map((l) => l.trim()).filter(Boolean)) {
+      // keepNext: the section moves to the next page whole, as in the PDF (#119).
+      const groups = resume.skills.split(/\n+/).map((l) => l.trim()).filter(Boolean)
+      groups.forEach((group, i) => {
         const m = SKILL_GROUP.exec(group)
         body.push(new Paragraph({
           keepLines: true,
+          keepNext: i < groups.length - 1,
           spacing: place(LH, LH + 1),
           children: m ? [new TextRun({ text: `${m[1].trim()}: `, bold: true }), new TextRun(m[2])] : [new TextRun(group)],
         }))
-      }
+      })
     },
   }
   for (const s of orderedSections(resume)) {
