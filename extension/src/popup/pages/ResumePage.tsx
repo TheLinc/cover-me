@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { ensureValidSession, uploadResumeToBackend } from '../../lib/auth'
-import { DESIGN_CHECK_STALE_MS, DESIGN_UPLOAD_MAX, sha256Hex, toBase64, usesDesign } from '../../lib/design'
+import { uploadResumeToBackend } from '../../lib/auth'
+import { DESIGN_CHECK_STALE_MS, DESIGN_UPLOAD_MAX, usesDesign } from '../../lib/design'
 import { designUsable } from '../../lib/pdf/docx-design'
 import { MAX_RESUME_CHARS } from '../../lib/ai/resume-parse'
-import { parseResume, READER_VERSION } from '../../lib/resume-parser'
-import { getCachedTier, getDesignFile, getMode, getResume, getSession, saveDesignFile, saveResume, watchResume } from '../../lib/storage'
+import { needsUploadNote } from '../../lib/reread'
+import { downloadStoredFile, saveUpload, storedFile } from '../../lib/resume-file'
+import { parseResume } from '../../lib/resume-parser'
+import { getCachedTier, getMode, getResume, getSession, saveResume, watchResume } from '../../lib/storage'
 import type { DesignCheck, ParsedResume, ResumeData } from '../../types'
 
 type Status = 'idle' | 'parsing' | 'saved' | 'error'
@@ -21,6 +23,7 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
   const [pro, setPro] = useState(false)
   // Existing users: the "New" notice the Resume tab's dot leads to (#131).
   const [news, setNews] = useState(false)
+  const [noteSeen, setNoteSeen] = useState(true)
 
   useEffect(() => {
     const show = (r: ResumeData | null) => {
@@ -33,9 +36,17 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
       })
     }
     getResume().then(show)
-    chrome.storage.local.get('designNews').then((r) => setNews(r.designNews === 'pending' || r.designNews === 'opened'))
+    chrome.storage.local.get(['designNews', 'readerNote']).then((r) => {
+      setNews(r.designNews === 'pending' || r.designNews === 'opened')
+      setNoteSeen(r.readerNote === 'seen')
+    })
     return watchResume(show)
   }, [])
+
+  function dismissReaderNote() {
+    setNoteSeen(true)
+    void chrome.storage.local.set({ readerNote: 'seen' })
+  }
 
   function dismissNews() {
     setNews(false)
@@ -58,31 +69,8 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
     setParsed(null)
     try {
       const text = await parseResume(file)
-      // A Word file is kept, so tailoring can edit it in place (#131).
-      const bytes = file.name.toLowerCase().endsWith('.docx') ? new Uint8Array(await file.arrayBuffer()) : null
-      const hash = bytes ? await sha256Hex(bytes) : undefined
-      // ensureValidSession refreshes an expired token (or clears a dead session),
-      // so the upload below doesn't fail with a stale token (#16).
-      const [mode, session] = await Promise.all([getMode(), ensureValidSession()])
-      const hosted = mode === 'hosted' && !!session
-      // Signed in (either mode): the copy belongs to this account. Signed out
-      // after an account was here: it keeps that owner, so another account can't
-      // claim it, and is marked so the owner's next sign-in doesn't upload it
-      // either (it may be someone else's). See syncResume in lib/auth.ts (#16).
-      const inherited = session ? undefined : (await getResume())?.accountId
-      const data: ResumeData = {
-        text, filename: file.name, updatedAt: new Date().toISOString(), readerVersion: READER_VERSION,
-        ...(session ? { accountId: session.user.id } : inherited ? { accountId: inherited, signedOutUpload: true } : {}),
-        ...(bytes && hash ? { design: { hash, size: bytes.length, status: 'checking' as const, checkedAt: new Date().toISOString() } } : {}),
-      }
-      // The resume first: a file stored before anything points to it could be
-      // pruned by a History save in between (#131).
-      await saveResume(data)
-      if (bytes && hash) {
-        // The same file again keeps the parse it was checked against (#131).
-        await saveDesignFile(hash, { ...(await getDesignFile(hash)), data: toBase64(bytes) })
-        checkDesign(hash)
-      }
+      const { resume: data, word, hosted } = await saveUpload(file, text)
+      if (word) checkDesign(word)
       dismissNews()
       setResume(data)
       setStatus('saved')
@@ -92,8 +80,8 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
       // the text itself and waits for the server's parse of it: a second
       // upload here would start a second parse that can come out different.
       // Its failures show on the card (#131).
-      if (hosted && session && !bytes) {
-        uploadResumeToBackend(session.access_token, text, file.name).catch((err) => {
+      if (hosted && !word) {
+        uploadResumeToBackend(hosted.access_token, text, file.name, false, { readerVersion: data.readerVersion, uploadedAt: data.uploadedAt }).catch((err) => {
           setError(`Saved locally, but cloud sync failed: ${err instanceof Error ? err.message : 'unknown error'}`)
         })
       }
@@ -129,6 +117,8 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
   }
 
   const wordUpload = !!resume?.filename.toLowerCase().endsWith('.docx')
+  const readerNote = needsUploadNote(resume, noteSeen)
+  const kept = resume ? storedFile(resume) : undefined
 
   return (
     <div className="page">
@@ -139,7 +129,18 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
         </div>
       )}
 
-      {news && resume && !resume.design && (
+      {readerNote && (
+        <section className="page-read-notice" aria-labelledby="reader-note-title">
+          <p id="reader-note-title" className="page-read-notice-title">Re-upload your resume</p>
+          <p>Cover Me reads resumes better now. It keeps the links behind clickable text and the order of your sections. Upload yours again, and future improvements will apply on their own.</p>
+          <div className="page-read-notice-actions">
+            <button className="btn btn-primary btn-sm" onClick={() => inputRef.current?.click()}>Upload again</button>
+            <button className="btn btn-secondary btn-sm" onClick={dismissReaderNote}>Not now</button>
+          </div>
+        </section>
+      )}
+
+      {news && !readerNote && resume && !resume.design && (
         <section className="page-read-notice" aria-labelledby="design-news-title">
           <div className="news-heading">
             <span className="news-icon" aria-hidden="true">
@@ -213,7 +214,14 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
               </svg>
             </div>
             <div className="resume-info">
-              <div className="resume-name">{resume.filename}</div>
+              <div className="resume-name-row">
+                <div className="resume-name">{resume.filename}</div>
+                {kept && (
+                  <button type="button" className="btn btn-secondary btn-sm resume-download" aria-label={`Download ${resume.filename}`} onClick={() => void downloadStoredFile(kept.id, resume.filename)}>
+                    Download
+                  </button>
+                )}
+              </div>
               <div className="resume-meta">
                 Updated {formatAge(resume.updatedAt)} · ~{Math.round(resume.text.length / 5)} words
               </div>

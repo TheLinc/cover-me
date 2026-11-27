@@ -239,6 +239,17 @@ describe('tailor', () => {
     expect((await prompts()).some((p) => p.includes('linksKept'))).toBe(false)
   })
 
+  it('a parse with parseVersion is current, and the number stays out of the prompt and the resume (#401)', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await cacheParsedResume(user.id, { ...CURRENT, parseVersion: 1 })
+    await mockClaude.reset()
+    const { resume } = await (await callFunction('tailor', { token: user.token, body: { job: JOB } })).json()
+    expect((await prompts()).filter(isParse)).toHaveLength(0)
+    expect(resume).not.toHaveProperty('parseVersion')
+    expect((await prompts()).some((p) => p.includes('parseVersion'))).toBe(false)
+  })
+
   it('streams NDJSON start, delta and done events when asked', async () => {
     user = await createUser()
     await uploadResume(user)
@@ -351,6 +362,18 @@ describe('tailor', () => {
     expect(data?.[0].ats_score).toBe(77)
     expect(data?.[0].ats_gaps).toEqual(['Kafka'])
     expect(data?.[0].job_application_id).toBeTruthy()
+  })
+
+  it("a Pro tailor keeps the source resume's name and upload date with its copy, not in the answer (#401)", async () => {
+    user = await createUser('hosted_pro')
+    const res0 = await callFunction('resume', { token: user.token, body: { text: LONG_RESUME_TEXT, filename: 'Pat Resume.pdf', uploadedAt: '2026-11-20T15:00:00.000Z' } })
+    expect(res0.status).toBe(200)
+    const { resume } = await (await callFunction('tailor', { token: user.token, body: { job: JOB } })).json()
+    expect(resume).not.toHaveProperty('source')
+    const { applications } = await (await callFunction('applications', { token: user.token })).json()
+    const saved = applications[0].tailoredResumes[0].resume
+    expect(saved.source.filename).toBe('Pat Resume.pdf')
+    expect(Date.parse(saved.source.uploadedAt)).toBe(Date.parse('2026-11-20T15:00:00.000Z'))
   })
 
   it("tailored in the user's Word file: the hash goes on the result and the Pro copy, and the run is counted", async () => {
