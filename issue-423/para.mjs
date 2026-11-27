@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict'
+import { chromium } from '../tools/node_modules/playwright-core/index.mjs'
+const b = await chromium.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe' })
+const p = await b.newPage({ viewport: { width: 1280, height: 900 } })
+await p.goto('http://localhost:3424/guides/best-chrome-extensions-for-job-applications', { waitUntil: 'networkidle', timeout: 300_000 })
+const para = p.locator('main p', { hasText: 'When AI tools rewrite a resume' })
+assert.equal(await para.count(), 1)
+assert.equal(await para.locator('a[href="/guides/best-ai-for-resume-tailoring"]').count(), 1)
+await para.scrollIntoViewIfNeeded()
+await para.screenshot({ path: 'shots2/after-8-tailoring-test.png' })
+const faq = p.locator('h3', { hasText: 'Do AI resume tailoring tools make up experience?' })
+assert.equal(await faq.count(), 1)
+await faq.locator('xpath=..').screenshot({ path: 'shots2/after-9-faq-made-up.png' })
+await b.close()
+console.log('ok')
