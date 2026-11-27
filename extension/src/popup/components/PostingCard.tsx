@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import type { JobData } from '../../types'
+import indeedIcon from '../../welcome/indeed.png'
+import linkedInIcon from '../../welcome/linkedin.png'
 
 const BOARDS = [
-  { name: 'LinkedIn jobs', url: 'https://www.linkedin.com/jobs/' },
-  { name: 'Indeed jobs', url: 'https://www.indeed.com/' },
+  { name: 'LinkedIn jobs', url: 'https://www.linkedin.com/jobs/', icon: linkedInIcon },
+  { name: 'Indeed jobs', url: 'https://www.indeed.com/', icon: indeedIcon },
 ]
 
 function siteOf(url: string) {
@@ -48,7 +50,10 @@ export default function PostingCard({ posting, onPaste }: { posting: JobData | n
         <p className="posting-empty-sub">Some careers pages only show the job once you click. Try anyway, or open a posting on LinkedIn or Indeed.</p>
         <div className="posting-boards">
           {BOARDS.map((b) => (
-            <button key={b.url} className="btn btn-secondary btn-sm" onClick={() => void chrome.tabs.create({ url: b.url })}>{b.name}</button>
+            <a key={b.url} className="btn btn-secondary btn-sm" href={b.url} target="_blank" rel="noreferrer">
+              <img src={b.icon} width="14" height="14" alt="" />
+              {b.name}<span className="sr-only"> (opens in a new tab)</span>
+            </a>
           ))}
         </div>
         <button className="upload-link posting-paste" onClick={onPaste}>Paste a job description instead</button>
