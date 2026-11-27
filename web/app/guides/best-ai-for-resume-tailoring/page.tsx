@@ -182,7 +182,7 @@ export default function Page() {
           body: (
             <>
               <p>
-                In this November 26, 2026 test with three resumes, Cover Me was the most accurate: all three of its tailored resumes were sendable, with no false or misleading claim and the best writing score, 4.0 out of 5. Rezi&rsquo;s one resume had no false claim either, but its free plan allowed only one. Claude and ChatGPT came close. Jobscan and Teal added a false claim to every resume.
+                In this November 26, 2026 test with three resumes, Cover Me was the most accurate: all three of its tailored resumes were sendable, with no false or misleading claim and the best writing score, 4.0 out of 5. Rezi&rsquo;s one resume had no false claim either, but its free plan allowed only one. Claude and ChatGPT came close. Jobscan, with every suggestion accepted, and Teal added a false claim to every resume.
               </p>
               <ResultsTable
                 rows={RESUMES}
