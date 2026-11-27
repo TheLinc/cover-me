@@ -259,7 +259,7 @@ export default function Page() {
           ),
         },
         {
-          title: '4. Resume Worded: a free score, with the details on Pro',
+          title: '4. Resume Worded: all 4 gaps on the free plan, after sign-up',
           body: (
             <p>
               Resume Worded&rsquo;s Score My Resume needs a free account and shows your score and top issues for free, according to its <a href={SRC.resumeWordedUpload} {...ext}>upload page</a>. Its Targeted Resume tool scores your resume against one job description. In the test it gave a relevancy score of 81 and listed all 4 missing keywords on the free plan, along with &ldquo;Analytics&rdquo; from the company&rsquo;s name and &ldquo;Sales&rdquo;. The <a href={SRC.resumeWordedPro} {...ext}>Pro page</a> lists the full Targeted Resume report and the AI bullet writer as Pro features, at $49 a month, $99 every 3 months or $229 a year. It also reviews LinkedIn profiles.
