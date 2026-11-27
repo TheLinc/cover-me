@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { refreshResume } from '../lib/reread'
 import Nav from './components/Nav'
 import GeneratePage from './pages/GeneratePage'
 import HistoryPage from './pages/HistoryPage'
@@ -14,6 +15,7 @@ export default function App() {
   const [designNews, setDesignNews] = useState(false)
 
   useEffect(() => {
+    void refreshResume().catch(() => {})
     chrome.storage.local.get(['activePage', 'designNews']).then((r) => {
       if (r.activePage) setPage(r.activePage as Page)
       setDesignNews(r.designNews === 'pending')
