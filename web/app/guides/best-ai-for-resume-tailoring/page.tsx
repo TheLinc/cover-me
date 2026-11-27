@@ -160,7 +160,7 @@ export default function Page() {
                 <li>A content marketer applying for a Growth Marketing Manager job at a fintech that wants Meta Ads, ROAS and B2B SaaS.</li>
               </ul>
               <p>
-                In ChatGPT and Claude I typed what most people would: &ldquo;Tailor my resume to this job posting.&rdquo; or &ldquo;Write a cover letter for this job using my resume.&rdquo;, then pasted the posting and the resume, one fresh chat per request. ChatGPT ran on a free account in a temporary chat with its default model. Claude ran Sonnet 5.5, the model on its free plan. The other tools ran with their default settings:
+                In ChatGPT and Claude I typed what most people would, &ldquo;Tailor my resume to this job posting&rdquo; or &ldquo;Write a cover letter for this job using my resume&rdquo;, then pasted the posting and the resume, one fresh chat per request. ChatGPT ran on a free account in a temporary chat with its default model. Claude ran Sonnet 5.5, the model on its free plan. The other tools ran with their default settings:
               </p>
               <ul>
                 <li>Cover Me: built from its main branch on November 26 (version 1.10.0 plus unreleased changes), on a Pro account, posting pasted in, default options. It uses the same Claude Sonnet 5.5 model as the Claude chat.</li>
@@ -172,7 +172,7 @@ export default function Page() {
                 A separate Claude session scored the 29 documents without knowing which tool wrote which. For each one it listed every claim the resume doesn&rsquo;t support, rated how bad it is, and scored the writing from 1 to 5. A false claim is one a recruiter or a reference check would catch. A misleading one is close to the truth but overstated. A document is sendable if it has neither and no leftover placeholder.
               </p>
               <p>
-                The limits: three cases with one run each is enough for examples, not percentages. The scorer is a Claude model, and both Cover Me and the Claude chat run on Claude. It also missed one line in a Cover Me letter that I caught by hand, which is in the cover letter section below.
+                The limits: three cases with one run each is enough for examples, not percentages. The scorer is a Claude model, and Cover Me, the Claude chat and, by default, Teal&rsquo;s cover letters run on Claude models. It also missed one line in a Cover Me letter that I caught by hand, which is in the cover letter section below.
               </p>
             </>
           ),
@@ -182,11 +182,11 @@ export default function Page() {
           body: (
             <>
               <p>
-                In this November 26, 2026 test with three resumes, Cover Me was the most accurate: all three of its tailored resumes were sendable, with no false or misleading claim and the best writing score, 4.0 out of 5. Rezi&rsquo;s one resume had no false claim either, but its free plan allowed only one. Claude and ChatGPT came close. Jobscan, with every suggestion accepted, and Teal added a false claim to every resume.
+                In this November 26, 2026 test with three resumes, Cover Me, which I build, was the most accurate: all three of its tailored resumes were sendable, with no false or misleading claim and the best writing score, 4.0 out of 5. Rezi&rsquo;s one resume had no false claim either, but its free plan allowed only one. Claude and ChatGPT came close. Jobscan, with every suggestion accepted, and Teal added a false claim to every resume.
               </p>
               <ResultsTable
                 rows={RESUMES}
-                caption="Tailored resumes, scored blind on November 26, 2026. Teal's are the imported resume plus its AI summary, on the free plan, and Rezi's free plan allowed one resume. Leftover placeholders aren't counted as claims: Claude left one in a bullet, one reason that resume isn't sendable, and Jobscan's editor had 5 empty fields, such as a blank GPA line, that probably don't export. Each Jobscan resume has a false claim without them."
+                caption="Tailored resumes, scored blind on November 26, 2026. Teal's are the imported resume plus its AI summary, on the free plan, and Rezi's free plan allowed one resume. Leftover placeholders aren't counted as claims: Claude left one in a bullet, one reason that resume isn't sendable, and Jobscan's editor had 6 empty fields, such as a blank GPA line. Each Jobscan resume has a false claim without them."
               />
               <h3>Cover Me</h3>
               <p>
@@ -197,7 +197,7 @@ export default function Page() {
               </p>
               <h3>Claude and ChatGPT</h3>
               <p>
-                Neither chatbot claimed Redux, Kubernetes, ACLS, Meta Ads or the other headline requirements in a resume. Both pointed out the gaps and told the applicant not to claim them. Their problems were smaller, and some still borrowed from the posting: ChatGPT added an &ldquo;Interdisciplinary collaboration&rdquo; skill to the nurse&rsquo;s resume, echoing the posting&rsquo;s interdisciplinary rounds. Claude left an instruction inside a bullet in the marketing resume: &ldquo;A/B test campaigns and content to improve engagement and conversion (add a specific test and result here if you have one)&rdquo;, and opened the email bullet with &ldquo;Built lifecycle email programs in HubSpot&rdquo;, when the resume says only that the applicant segmented sends. ChatGPT described a developer whose dashboards serve 60,000 monthly users as having &ldquo;experience building high-traffic interfaces&rdquo;, echoing the posting&rsquo;s &ldquo;high-traffic consumer products&rdquo;. Both return chat text, so you still copy it into a document and format it yourself.
+                Neither chatbot claimed Redux, Kubernetes, ACLS, Meta Ads or the other headline requirements in a resume. Both pointed out the gaps and told the applicant not to claim them. Their problems were smaller, and some still borrowed from the posting: ChatGPT added an &ldquo;Interdisciplinary collaboration&rdquo; skill to the nurse&rsquo;s resume, echoing the posting&rsquo;s interdisciplinary rounds. Claude left an instruction inside a bullet in the marketing resume: &ldquo;A/B test campaigns and content to improve engagement and conversion (add a specific test and result here if you have one)&rdquo;, and opened the email bullet with &ldquo;Built lifecycle email programs in HubSpot&rdquo;, when the resume&rsquo;s only HubSpot work is segmenting sends. ChatGPT described a developer whose dashboards serve 60,000 monthly users as having &ldquo;experience building high-traffic interfaces&rdquo;, echoing the posting&rsquo;s &ldquo;high-traffic consumer products&rdquo;. Both return chat text, so you still copy it into a document and format it yourself.
               </p>
               <h3>Rezi AI</h3>
               <p>
@@ -205,7 +205,7 @@ export default function Page() {
               </p>
               <h3>Jobscan AI Optimize</h3>
               <p>
-                AI Optimize added a claim the resume doesn&rsquo;t support to every resume. The developer, who builds analytics dashboards, got &ldquo;Developed E-Commerce marketing sites and internal tools in React&rdquo; and a bullet ending &ldquo;ensuring compliance with WCAG 2.1 AA standards&rdquo;. The med-surg nurse got &ldquo;post-surgical discharge planning and critical care transitions&rdquo;. The marketer got &ldquo;to support brand storytelling and B2B awareness&rdquo;. Each one borrows from the posting and writes it into the applicant&rsquo;s past. Jobscan does let you reject suggestions one at a time, so a careful user can avoid this. The <Link href="/guides/jobscan-review">Jobscan review</Link> covers its prices and match rate.
+                AI Optimize added a claim the resume doesn&rsquo;t support to every resume. The developer, who builds analytics dashboards, got &ldquo;Developed E-Commerce marketing sites and internal tools in React&rdquo; and a bullet ending &ldquo;ensuring compliance with WCAG 2.1 AA standards&rdquo;. The med-surg nurse got &ldquo;post-surgical discharge planning and critical care transitions&rdquo;. The marketer got &ldquo;to support brand storytelling and B2B awareness&rdquo;. Each one borrows from the posting and writes it into the applicant&rsquo;s past. Jobscan does let you reject suggestions one at a time, and its editor warns &ldquo;AI helps improve your resume, but always review it to make sure it&rsquo;s correct&rdquo;, so a careful user can avoid this. I ran only its default Fast setting, not Deep or One-page. The <Link href="/guides/jobscan-review">Jobscan review</Link> covers its prices and match rate.
               </p>
               <h3>Teal AI resume builder</h3>
               <p>
@@ -228,7 +228,7 @@ export default function Page() {
           ),
         },
         {
-          title: 'Cover letters: the best-written letter wasn’t the most accurate',
+          title: 'Cover letters: the best letter writer wasn’t the most accurate',
           body: (
             <>
               <p>
@@ -248,7 +248,7 @@ export default function Page() {
           title: 'A stress test: Teal’s bullet writer',
           body: (
             <p>
-              Teal&rsquo;s Write Bullet tool offers keywords from the posting, including ones your resume lacks, and writes bullets with them. I picked three requirements the developer doesn&rsquo;t have, as someone chasing a higher match might. It wrote &ldquo;Led the implementation of Redux for state management across a React application, enhancing performance and scalability for over 900,000 monthly users within 4 months.&rdquo; and &ldquo;Optimized deployment processes using Kubernetes, reducing downtime by X%&rdquo;, with no warning that the resume shows neither. This is a test I set up on purpose, so it isn&rsquo;t in the tables, but it shows what happens when a tool does what you ask.
+              Teal&rsquo;s Write Bullet tool offers keywords from the posting, including ones your resume lacks, and writes bullets with them. I picked Redux, Kubernetes and state management, as someone chasing a higher match might. The developer has used neither Redux nor Kubernetes. It wrote &ldquo;Led the implementation of Redux for state management across a React application, enhancing performance and scalability for over 900,000 monthly users within 4 months.&rdquo; and &ldquo;Optimized deployment processes using Kubernetes, reducing downtime by X%&rdquo;, with no warning that the resume shows neither. This is a test I set up on purpose, so it isn&rsquo;t in the tables, but it shows what happens when a tool does what you ask.
             </p>
           ),
         },
